@@ -16,7 +16,7 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('TopRankMed API')
+    .setTitle('RtoSpecialist API')
     .setDescription('API documentation')
     .setVersion('1.0')
     .build();
