@@ -1,0 +1,13 @@
+{
+  "extends": "../typescript-config/base.json",  // If you have shared config
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true,  // Important for better monorepo performance
+    "incremental": true,
+    "declaration": true,
+    "declarationMap": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

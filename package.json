@@ -1,0 +1,34 @@
+{
+  "name": "rtospecialist-monorepo",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check-types": "turbo run check-types",
+    "db:studio": "cd apps/api && npx prisma studio",
+    "db:migrate": "cd apps/api && npx prisma migrate dev",
+    "db:generate": "cd apps/api && npx prisma generate",
+    "db:reset": "cd apps/api && npx prisma migrate reset"
+  },
+  "devDependencies": {
+    "prettier": "^3.7.4",
+    "turbo": "^2.9.16",
+    "typescript": "5.9.2"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "npm@11.14.1",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "dependencies": {
+    "@nestjs/config": "^4.0.4",
+    "@nestjs/passport": "^11.0.5",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1"
+  }
+}
