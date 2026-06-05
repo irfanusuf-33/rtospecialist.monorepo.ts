@@ -29,7 +29,11 @@ export class AuthService {
     const user = await this.usersService.createUser({
       email: dto.email,
       password: hashedPassword,
-      name: dto.name,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      phoneNumber: dto.phoneNumber,
+      jobRole: dto.jobRole,
+      company: dto.company,
     });
 
     return {
@@ -158,7 +162,8 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
     return {
-      name: user.name,
+      firstName: user.firstName,
+      lastName: user.lastName,
       email: user.email,
       id: user.id,
     };

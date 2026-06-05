@@ -4,8 +4,12 @@ import { User } from '../entities/user.entity';
 // Create user request body
 export interface CreateUserDto {
   email: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   password: string;
+  phoneNumber: string;
+  jobRole?: string;
+  company?: string;
 }
 
 // Update user request body (all optional)

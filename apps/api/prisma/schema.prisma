@@ -14,20 +14,687 @@ enum Role {
   RECRUITER
 }
 
+enum PlanType {
+  PRODEV
+  GROUP
+  EMPLOYER
+}
+
+enum PlanTier {
+  // PRODEV Tiers
+  BASIC
+  STARTER
+  PREMIUM
+  // GROUP Tiers
+  ESSENTIAL
+  GROWTH
+  ENTERPRISE
+  // EMPLOYER Tiers
+  PROFESSIONAL
+}
+
+enum PlanStatus {
+  paid
+  pending
+  failed
+  canceled
+}
+
+enum TicketStatus {
+  pending
+  resolved
+}
+
+enum TicketGroup {
+  PAYMENT
+  GENERAL
+  ORDER
+  MEMBERSHIP
+}
+
+enum OrderStatus {
+  pending
+  processing
+  succeeded
+  failed
+  refunded
+  cancelled
+}
+
+enum PaymentMethod {
+  CARD
+  BANK
+  CREDITS
+}
+
+enum TitleEnum {
+  Mr
+  Mrs
+  Ms
+  Dr
+  Prof
+  None
+}
+
+enum CouponType {
+  percentage
+  fixed
+}
+
+enum TargetProductType {
+  Product // Matches the model name 'Product' exactly
+  PdevProduct // Matches the model name 'PdevProduct' exactly
+}
+
+enum LogCategory {
+  AUTH
+  ORDER
+  PRODUCT
+  COURSE_TRAINING
+  SYSTEM
+}
+
+enum LogStatus {
+  SUCCESS
+  FAILED
+  WARNING
+}
+
+enum LogStage {
+  STARTED
+  COMPLETED
+  IN_PROGRESS
+}
+
+model Admin {
+  id              String   @id @default(uuid())
+  email           String   @unique @db.VarChar(100)
+  password        String   @db.VarChar(100)
+  permissionGroup String[] @default([])
+  isDisabled      Boolean  @default(false)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ─── SELF-REFERENTIAL RELATION FIELDS ────────────────────────────────────
+  // 1. The physical database column holding the creator's Admin ID (nullable)
+  createdById String?
+
+  // 2. The relation field to fetch the admin who created this admin
+  createdBy Admin? @relation("AdminToAdmin", fields: [createdById], references: [id], onDelete: SetNull)
+
+  // 3. The opposite backlink array: Admins that *this* admin has created
+  createdAdmins Admin[] @relation("AdminToAdmin")
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // Existing relationships
+  pdevProductCategories PdevProductCategory[]
+  pdevProducts          PdevProduct[]
+
+  @@map("admins")
+}
+
 model User {
-  id              String   @id @default(cuid())
-  email           String   @unique
+  id              String    @id @default(cuid())
+  email           String    @unique
   password        String
-  name            String?
-  role            Role     @default(STAFF)
-  isActive        Boolean  @default(true)
+  firstName       String
+  lastName        String
+  phoneNumber     String
+  role            Role      @default(STAFF)
+  disabled        Boolean   @default(false)
+  isActive        Boolean   @default(true)
   emailVerifiedAt DateTime? @map("email_verified_at")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Stripe & Credits
+  stripeId                 String?
+  staff                    Int     @default(0)
+  certCredits              Int     @default(0)
+  unitCredits              Int     @default(0)
+  totalCertCredits         Int     @default(0)
+  totalPdevUsersCredited   Int     @default(0)
+  moneySavedWithMembership Float   @default(0)
+
+  // Compliance & Tokens
+  termAndCondAgreed   Boolean @default(true)
+  privacyPolicyAgreed Boolean @default(true)
+  cookiePolicyAgreed  Boolean @default(true)
+  marketingConsent    Boolean @default(false)
+
+  // Retention & Lifecycle
+  scheduledDeletion Boolean   @default(false)
+  deletionAt        DateTime?
+
+  // B2B / Marketing Metadata
+  jobRole                    String @default("")
+  company                    String @default("")
+  interestType               String @default("")
+  leadSource                 String @default("Website")
+  trainingResourcesDownloads Int    @default(0)
+
+  // Dynamic ABN data (kept as Json for simplicity, or could be its own table)
+  abnDetails Json?
+
+  // Membership Relations
+  memberships      Membership[] // A user can have multiple active/past memberships
+  billingAddresses BillingAddress[] // A user can have multiple saved billing addresses
+
+  pdevUsers     PdevUser[]
+  courseResults PdevProductCourseResult[]
+  helpTickets   HelpAndSupport[]
+  orders        Order[]
+  cart          Cart?
 
   @@index([email])
   @@index([role])
   @@index([createdAt])
-  @@index([isActive])
+  @@index([disabled])
   @@map("users")
+}
+
+// ==========================================
+// AFFILIATE MODEL (New)
+// ==========================================
+model AffiliateUser {
+  id                 String    @id @default(uuid())
+  firstName          String    @db.VarChar(30)
+  lastName           String    @db.VarChar(30)
+  email              String    @unique @db.VarChar(50)
+  password           String    @db.VarChar(100)
+  phoneNumber        String    @db.VarChar(20)
+  termAndCondAgreed  Boolean   @default(true)
+  privacyPolicyAgeed Boolean   @default(true) // Kept your original "Ageed" typo to match your database mappings safely
+  cookiePolicyAgreed Boolean   @default(true)
+  scheduledDeletion  Boolean   @default(false)
+  deletionAt         DateTime?
+  isDisabled         Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("affiliate_users")
+}
+
+model PdevUser {
+  id          String  @id @default(uuid())
+  firstName   String  @db.VarChar(100)
+  lastName    String  @db.VarChar(100)
+  email       String  @db.VarChar(100)
+  phoneNumber String  @db.VarChar(30)
+  password    String  @db.VarChar(100)
+  disabled    Boolean @default(false)
+  authToken   String? @db.Text
+
+  // Relationship to General User
+  generalUserId String
+  generalUser   User   @relation(fields: [generalUserId], references: [id])
+
+  // Backlink relation for Course Results
+  courseResults PdevProductCourseResult[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("pdev_users") // Maps to updated clean table name
+}
+
+// ==========================================
+// MEMBERSHIP MODEL (New)
+// ==========================================
+
+model Membership {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type     PlanType // PRODEV, GROUP, or EMPLOYER
+  planTier PlanTier // BASIC, STARTER, ESSENTIAL, etc.
+  status   PlanStatus @default(pending)
+
+  paymentId    String?
+  membershipId String? // Outer gateway subscription reference id (e.g., Stripe subscription item id)
+
+  placedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("memberships")
+}
+
+// ==========================================
+// BILLING ADDRESS MODEL (Extracted from Array)
+// ==========================================
+model BillingAddress {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title         String? // e.g., "Headquarters", "Home"
+  postalAddress String
+  street        String
+  city          String
+  state         String
+  postalCode    String
+  country       String
+  active        Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("billing_addresses")
+}
+
+// ==========================================
+// PRODUCT MODEL (New)
+// ==========================================
+
+enum GroupType {
+  Elective_Units @map("Elective Units")
+  Core_Units     @map("Core Units")
+}
+
+enum QualificationLevel {
+  Advanced_Diploma @map("Advanced Diploma")
+  Certificate_I    @map("Certificate I")
+  Certificate_II   @map("Certificate II")
+  Certificate_III  @map("Certificate III")
+  Certificate_IV   @map("Certificate IV")
+  Diploma
+  Graduate_Diploma @map("Graduate Diploma")
+}
+
+enum VersionStatus {
+  available
+  update
+  locked
+}
+
+model Product {
+  id                          String   @id @default(uuid()) // Using UUID for Postgres primary key
+  productId                   String   @unique @db.VarChar(100)
+  name                        String   @db.VarChar(1000)
+  description                 String   @db.VarChar(5000)
+  aboutUnit                   String[] @default([])
+  targetLearnerDescription    String?  @db.VarChar(5000)
+  targetLearnerBullets        String[] @default([])
+  learningOutcomesDescription String?  @db.VarChar(5000)
+  learningOutcomesBullets     String[] @default([])
+  productDetails              String[] @default([])
+
+  // Handles the deeply nested productDetailsSections object array elegantly in PostgreSQL
+  productDetailsSections Json[] @default([])
+
+  link               String?              @unique
+  price              Float
+  salePrice          Float
+  group              GroupType
+  qualificationLevel QualificationLevel[] @default([])
+  preOrder           Boolean              @default(false)
+  fileUploaded       Boolean              @default(false)
+
+  // Embedded versions flattened for SQL ease
+  versionNumber Int           @default(1)
+  versionStatus VersionStatus @default(available)
+
+  // Array of IDs pointing to Category & Subcategory tables (Relational representation)
+  categories    Category[]    @relation("ProductToCategory")
+  subcategories Subcategory[] @relation("ProductToSubcategory")
+  cartItems     CartItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  couponProducts CouponProduct[]
+
+  @@map("products")
+}
+
+model Category {
+  id                   String    @id @default(uuid())
+  name                 String    @unique @db.VarChar(500)
+  abbreviation         String    @unique @db.VarChar(15)
+  headline             String?   @db.VarChar(200)
+  subHeadline          String?   @db.VarChar(500)
+  url                  String?   @unique
+  disable              Boolean   @default(true)
+  iconUrl              String
+  isNewlyUpdated       Boolean   @default(false)
+  newProductFlagExpiry DateTime?
+
+  // One-to-Many: One category has multiple subcategories
+  subcategories Subcategory[] @relation("CategoryToSubcategory")
+
+  // Many-to-Many relation backlink to products
+  products Product[] @relation("ProductToCategory")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("categories")
+}
+
+model Subcategory {
+  id      String  @id @default(uuid())
+  name    String  @unique @db.VarChar(500)
+  url     String? @unique
+  disable Boolean @default(false)
+
+  // Foreign key linking to parent Category
+  categoryId String
+  category   Category @relation("CategoryToSubcategory", fields: [categoryId], references: [id], onDelete: Cascade)
+
+  // Many-to-Many relation backlink to products
+  products Product[] @relation("ProductToSubcategory")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("subcategories")
+}
+
+model PdevProductCategory {
+  id         String  @id @default(uuid()) // or @default(cuid()) / @id @default(autoincrement())
+  name       String
+  isDisabled Boolean @default(false)
+
+  // Timestamps & Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdById String
+  createdBy   Admin  @relation(fields: [createdById], references: [id])
+
+  products PdevProduct[]
+
+  @@map("pdev_product_categories") // Maps it to a clean table name in your DB
+}
+
+model PdevProduct {
+  id           String  @id @default(uuid())
+  fileId       String
+  name         String  @db.VarChar(500)
+  description  String? @db.VarChar(5000)
+  fileUploaded Boolean @default(false)
+  iconUrl      String  @db.VarChar(2000)
+
+  // String arrays mapped natively to PostgreSQL text arrays
+  features   String[] @default([])
+  courseFor  String[] @default([])
+  objectives String[] @default([])
+  includes   String[] @default([])
+
+  // One-to-Many relationship with FileData
+  fileData PdevFileData[] @relation("ProductToFileData")
+
+  // Relational link to the parent PdevProductCategory
+  parentId String
+  parent   PdevProductCategory @relation(fields: [parentId], references: [id])
+
+  // Relational link to the User who created it
+  createdById String
+  createdBy   Admin  @relation(fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  couponProducts CouponProduct[]
+  cartItems      CartItem[]
+
+  @@map("pdev_products")
+}
+
+model PdevFileData {
+  id           String   @id @default(uuid()) // Replaces Mongoose {_id: true}
+  question     String   @db.VarChar(2000)
+  questionData String[] @default([])
+  options      String[] @default([])
+  answer       String[] @default([])
+
+  // Foreign key mapping back to the main Product
+  productId String
+  product   PdevProduct @relation("ProductToFileData", fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("pdev_file_data")
+}
+
+enum AppointmentStatus {
+  Under_Review @map("Under Review")
+  Pending
+  Approved
+  Scheduled
+  Rejected
+}
+
+model Appointment {
+  id                String            @id @default(uuid())
+  firstName         String            @db.VarChar(30)
+  lastName          String            @db.VarChar(30)
+  email             String            @db.VarChar(50)
+  companyName       String            @db.VarChar(100)
+  position          String            @db.VarChar(200)
+  phoneNumber       String            @db.VarChar(20)
+  state             String            @db.VarChar(10)
+  message           String            @db.VarChar(600)
+  services          String[]          @default([])
+  status            AppointmentStatus @default(Pending)
+  scheduledDateTime DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("appointments")
+}
+
+model PdevProductCourseResult {
+  id             String @id @default(uuid())
+  correctAnswers String @db.VarChar(50)
+  totalQuestions String @db.VarChar(50)
+  fileId         String @db.VarChar(255)
+  progress       Float  @default(0) // Mongoose Number translates to Float/Double Precision in PostgreSQL
+
+  // Foreign keys
+  staffUserId   String
+  generalUserId String
+
+  // Relational connections
+  staffUser   PdevUser @relation(fields: [staffUserId], references: [id])
+  generalUser User     @relation(fields: [generalUserId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("pdev_product_course_results")
+}
+
+model HelpAndSupport {
+  id     String       @id @default(uuid())
+  title  String       @db.VarChar(30)
+  body   String       @db.VarChar(250)
+  status TicketStatus @default(pending)
+  group  TicketGroup
+  type   String       @default("")
+
+  // Optional foreign key to connect to a User profile
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("help_and_support_tickets")
+}
+
+model Coupon {
+  id               String     @id @default(uuid())
+  code             String     @unique
+  description      String     @db.Text
+  type             CouponType
+  value            Decimal    @db.Decimal(10, 2)
+  maxRedemptions   Int?
+  redemptionsCount Int        @default(0)
+  limitPerUser     Int        @default(1)
+  minOrderAmount   Decimal    @default(0.00) @db.Decimal(10, 2)
+  isActive         Boolean    @default(true)
+  startDate        DateTime   @default(now())
+  endDate          DateTime
+
+  // Polymorphic junction relation link
+  applicableProducts CouponProduct[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  carts     Cart[]
+
+  @@map("coupons")
+}
+
+model CouponProduct {
+  id          String            @id @default(uuid())
+  couponId    String
+  productId   String // Dynamic ID: can reference Product or PdevProduct
+  productType TargetProductType // Discriminator field
+
+  coupon Coupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
+
+  // FIX: Added unique custom constraint names using the `map` property
+  product     Product?     @relation(fields: [productId], references: [id], onDelete: Cascade, map: "coupon_product_standard_fkey")
+  pdevProduct PdevProduct? @relation(fields: [productId], references: [id], onDelete: Cascade, map: "coupon_product_pdev_fkey")
+
+  @@unique([couponId, productId, productType])
+  @@index([productId])
+  @@map("coupon_products")
+}
+
+model Order {
+  id                 String        @id @default(uuid())
+  userId             String
+  user               User          @relation(fields: [userId], references: [id])
+  email              String
+  referralId         String?
+  paymentId          String?       @unique
+  status             OrderStatus   @default(pending)
+  method             PaymentMethod
+  currency           String        @default("AUD")
+  subTotal           Decimal       @db.Decimal(10, 2)
+  discountAmount     Decimal       @default(0.00) @db.Decimal(10, 2)
+  taxAmount          Decimal       @default(0.00) @db.Decimal(10, 2)
+  amount             Decimal       @db.Decimal(10, 2)
+  certCreditsApplied Float         @default(0)
+  creditsApplied     Float         @default(0)
+  notes              String?       @db.Text
+  coupon             Json?
+
+  // Relations
+  billingAddress OrderBillingAddress? // Historical snapshot
+  products       OrderProduct[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([createdAt, status])
+  @@map("orders")
+}
+
+// Dedicated snapshot table for the order's billing details
+model OrderBillingAddress {
+  id      String @id @default(uuid())
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  title         String? // Saved from the original address title
+  postalAddress String
+  street        String
+  city          String
+  state         String
+  postalCode    String
+  country       String
+
+  @@map("order_billing_addresses")
+}
+
+model OrderProduct {
+  id        String  @id @default(uuid())
+  orderId   String
+  productId String
+  name      String
+  quantity  Int     @default(1)
+  salePrice Decimal @db.Decimal(10, 2)
+  type      String?
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("order_products")
+}
+
+model Cart {
+  id     String @id @default(uuid())
+  userId String @unique // One-to-one constraint enforced at DB level
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  referralId String? // Points to your Affiliate/Referral user entity ID
+  couponId   String?
+  coupon     Coupon? @relation(fields: [couponId], references: [id], onDelete: SetNull)
+
+  // Array of items inside the cart
+  products CartItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([referralId])
+  @@map("carts")
+}
+
+model CartItem {
+  id     String @id @default(uuid())
+  cartId String
+  cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  productId   String // Dynamic ID: references Product or PdevProduct
+  productType TargetProductType // Enum: 'Product' or 'PdevProduct'
+  quantity    Int               @default(1)
+
+  // Polymorphic foreign key mappings with distinct constraint names
+  product     Product?     @relation(fields: [productId], references: [id], onDelete: Cascade, map: "cart_item_product_fkey")
+  pdevProduct PdevProduct? @relation(fields: [productId], references: [id], onDelete: Cascade, map: "cart_item_pdev_fkey")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, productId, productType]) // Prevents duplicating the same item in a single cart
+  @@index([cartId])
+  @@map("cart_items")
+}
+
+model LogTrail {
+  id          String      @id @default(uuid())
+  userId      String?     // Nullable for unauthenticated endpoints or guest actions
+  accountType String?
+  email       String?
+
+  action      String      // e.g., "USER_LOGIN", "ORDER_CREATED"
+  category    LogCategory
+  status      LogStatus   @default(SUCCESS)
+  stage       LogStage    @default(COMPLETED)
+
+  // Captures collectionName, documentId, and displayName as structured historical state snapshots
+  target      Json        @default("{}")
+
+  // Captures description, ipAddress, userAgent, states, and error diagnostics cleanly
+  metaData    Json        @default("{}")
+
+  // Overriding default name to match your Mongoose 'timestamp' createdAt setup
+  timestamp   DateTime    @default(now())
+
+  @@index([userId, timestamp(sort: Desc)])
+  @@index([category, action, timestamp(sort: Desc)])
+  @@map("log_trails")
 }

@@ -16,7 +16,7 @@ export class UsersService {
         id: true,
         email: true,
         password: true,
-        name: true,
+        firstName: true,
         emailVerifiedAt: true,
         createdAt: true,
         updatedAt: true,
@@ -37,13 +37,21 @@ export class UsersService {
   async createUser(data: {
     email: string;
     password: string;
-    name: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    jobRole?: string;
+    company?: string;
   }) {
     return this.prisma.user.create({
       data: {
         ...data,
         emailVerifiedAt: null,
       },
+      include: {
+        memberships: true,
+        billingAddresses: true,
+      }
     });
   }
 
@@ -52,7 +60,8 @@ export class UsersService {
       select: {
         id: true,
         email: true,
-        name: true,
+        firstName: true,
+        lastName: true,
         createdAt: true,
       },
     });
