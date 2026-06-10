@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe } from '@nestjs/common';
 import { SubcategoriesService } from './subcategory.service';
 import { CreateSubcategoryDto } from './dto/create-subcategory.dto';
 import { UpdateSubcategoryDto } from './dto/update-subcategory.dto';
+import { ApiOperation, ApiParam } from '@nestjs/swagger';
 
 @Controller('subcategories')
 export class SubcategoriesController {
@@ -30,5 +31,20 @@ export class SubcategoriesController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.subcategoriesService.remove(id);
+  }
+
+  @Get('subcategories')
+  @ApiOperation({ summary: 'Get all subcategories globally' })
+  async getAllSubcategories() {
+    return this.subcategoriesService.findAllSubcategories();
+  }
+
+  @Get('category/:categoryId/subcategories')
+  @ApiOperation({ summary: 'Get all subcategories belonging to a specific category' })
+  @ApiParam({ name: 'categoryId', description: 'The Postgres UUID of the parent category' })
+  async getSubcategoriesByCategory(
+    @Param('categoryId', ParseUUIDPipe) categoryId: string,
+  ) {
+    return this.subcategoriesService.findSubcategoriesByCategory(categoryId);
   }
 }

@@ -3,11 +3,11 @@ import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { TargetProductType } from '@prisma/client';
 
-class AddCartItemDto {
+export class AddCartItemDto {
   @ApiProperty({ example: '8cfda241-1123-4567-b89c-cc7190d7cde3', description: 'The absolute unique database ID of the item' })
   @IsString()
   @IsNotEmpty()
-  productId: string = '';
+  productId!: string;
 
   @ApiProperty({ enum: TargetProductType, example: 'Product', description: 'The exact Prisma model collection to route dynamic find queries to' })
   @IsEnum(TargetProductType)
@@ -17,6 +17,7 @@ class AddCartItemDto {
   @ApiProperty({ example: 1, minimum: 1, description: 'Line item quantity volume allocation threshold' })
   @IsNumber()
   @Min(1)
+  @Type(() => Number)
   quantity: number = 1;
 }
 
@@ -41,4 +42,12 @@ export class CreateCartDto {
   @ValidateNested({ each: true })
   @Type(() => AddCartItemDto)
   products: AddCartItemDto[] = [];
+}
+
+export class AddMultipleCartItemsDto {
+  @ApiProperty({ type: [AddCartItemDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AddCartItemDto)
+  items!: AddCartItemDto[];
 }

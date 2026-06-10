@@ -72,4 +72,10 @@ export class CategoriesService {
     await this.findOne(id);
     return this.prisma.category.delete({ where: { id } });
   }
+
+  async findAllCategories() {
+    return this.prisma.category.findMany({
+      orderBy: { name: 'asc' },
+    });
+  }
 }

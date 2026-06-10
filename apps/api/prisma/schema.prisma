@@ -1,10 +1,12 @@
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["public", "admins", "users", "affiliate_users", "products", "pdev_products"]
 }
 
 enum Role {
@@ -12,12 +14,16 @@ enum Role {
   STAFF
   FACILITY
   RECRUITER
+
+  @@schema("public")
 }
 
 enum PlanType {
   PRODEV
   GROUP
   EMPLOYER
+
+  @@schema("public")
 }
 
 enum PlanTier {
@@ -31,18 +37,25 @@ enum PlanTier {
   ENTERPRISE
   // EMPLOYER Tiers
   PROFESSIONAL
+
+  @@schema("public")
 }
 
 enum PlanStatus {
+  succeeded
   paid
   pending
   failed
-  canceled
+  cancelled
+
+  @@schema("public")
 }
 
 enum TicketStatus {
   pending
   resolved
+
+  @@schema("public")
 }
 
 enum TicketGroup {
@@ -50,6 +63,8 @@ enum TicketGroup {
   GENERAL
   ORDER
   MEMBERSHIP
+
+  @@schema("public")
 }
 
 enum OrderStatus {
@@ -59,12 +74,17 @@ enum OrderStatus {
   failed
   refunded
   cancelled
+  paid
+
+  @@schema("public")
 }
 
 enum PaymentMethod {
   CARD
   BANK
   CREDITS
+
+  @@schema("public")
 }
 
 enum TitleEnum {
@@ -74,16 +94,22 @@ enum TitleEnum {
   Dr
   Prof
   None
+
+  @@schema("public")
 }
 
 enum CouponType {
   percentage
   fixed
+
+  @@schema("public")
 }
 
 enum TargetProductType {
   Product // Matches the model name 'Product' exactly
   PdevProduct // Matches the model name 'PdevProduct' exactly
+
+  @@schema("public")
 }
 
 enum LogCategory {
@@ -92,18 +118,32 @@ enum LogCategory {
   PRODUCT
   COURSE_TRAINING
   SYSTEM
+
+  @@schema("public")
 }
 
 enum LogStatus {
   SUCCESS
   FAILED
   WARNING
+
+  @@schema("public")
 }
 
 enum LogStage {
   STARTED
   COMPLETED
   IN_PROGRESS
+
+  @@schema("public")
+}
+
+enum AddonType {
+  CERT_CREDIT
+  UNIT_CREDIT
+  STAFF_SEAT
+
+  @@schema("public")
 }
 
 model Admin {
@@ -133,6 +173,7 @@ model Admin {
   pdevProducts          PdevProduct[]
 
   @@map("admins")
+  @@schema("admins")
 }
 
 model User {
@@ -187,12 +228,14 @@ model User {
   helpTickets   HelpAndSupport[]
   orders        Order[]
   cart          Cart?
+  logTrails     LogTrail[]
 
   @@index([email])
   @@index([role])
   @@index([createdAt])
   @@index([disabled])
   @@map("users")
+  @@schema("users")
 }
 
 // ==========================================
@@ -215,7 +258,10 @@ model AffiliateUser {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  logTrails LogTrail[]
+
   @@map("affiliate_users")
+  @@schema("affiliate_users")
 }
 
 model PdevUser {
@@ -238,7 +284,10 @@ model PdevUser {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  logTrails LogTrail[]
+
   @@map("pdev_users") // Maps to updated clean table name
+  @@schema("users")
 }
 
 // ==========================================
@@ -251,11 +300,20 @@ model Membership {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   type     PlanType // PRODEV, GROUP, or EMPLOYER
-  planTier PlanTier // BASIC, STARTER, ESSENTIAL, etc.
+  planTier PlanTier // Updated to match: BASIC, STARTER, ESSENTIAL, GROWTH, ENTERPRISE
   status   PlanStatus @default(pending)
 
-  paymentId    String?
-  membershipId String? // Outer gateway subscription reference id (e.g., Stripe subscription item id)
+  paymentId    String? // Initial or latest baseline subscription invoice/intent ID
+  membershipId String? // Outer gateway subscription reference id (e.g., Stripe sub_xxxx)
+
+  // --- BALANCES STORAGE LAYER ---
+  // Tracks active, real-time allowance ceilings inherited from base tiers + accumulated addons
+  totalStaffSeats  Int @default(0) // Tracks calculated user allowances (e.g., newUsersQty + tier base config)
+  totalCertCredits Int @default(0) // Tracks calculated certificate allocations (e.g., pdUsersQty + tier base config)
+  totalUnitCredits Int @default(0) // Tracks your tier-specific business unit credits allowance
+
+  // Relational link to structural line item recharges/audit trails
+  addons MembershipAddon[]
 
   placedAt  DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -263,6 +321,27 @@ model Membership {
   @@index([userId])
   @@index([status])
   @@map("memberships")
+  @@schema("users")
+}
+
+model MembershipAddon {
+  id           String     @id @default(uuid())
+  membershipId String
+  membership   Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  // Tracks exactly what this specific top-up/purchase was meant for
+  addonType AddonType // CERT_CREDIT, UNIT_CREDIT, or STAFF_SEAT
+  quantity  Int        @default(1) // The individual amount added during this specific event
+  status    PlanStatus @default(pending)
+
+  paymentId String? // Individual gateway PaymentIntent reference key (e.g., paymentIntentAddon.id)
+  placedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([membershipId])
+  @@index([status])
+  @@map("membership_addons")
+  @@schema("users")
 }
 
 // ==========================================
@@ -287,6 +366,7 @@ model BillingAddress {
 
   @@index([userId])
   @@map("billing_addresses")
+  @@schema("users")
 }
 
 // ==========================================
@@ -296,6 +376,8 @@ model BillingAddress {
 enum GroupType {
   Elective_Units @map("Elective Units")
   Core_Units     @map("Core Units")
+
+  @@schema("public")
 }
 
 enum QualificationLevel {
@@ -306,12 +388,16 @@ enum QualificationLevel {
   Certificate_IV   @map("Certificate IV")
   Diploma
   Graduate_Diploma @map("Graduate Diploma")
+
+  @@schema("public")
 }
 
 enum VersionStatus {
   available
   update
   locked
+
+  @@schema("public")
 }
 
 model Product {
@@ -352,10 +438,12 @@ model Product {
   couponProducts CouponProduct[]
 
   @@map("products")
+  @@schema("products")
 }
 
 model Category {
   id                   String    @id @default(uuid())
+  mongoId      String?       @unique @db.VarChar(24)
   name                 String    @unique @db.VarChar(500)
   abbreviation         String    @unique @db.VarChar(15)
   headline             String?   @db.VarChar(200)
@@ -376,10 +464,12 @@ model Category {
   updatedAt DateTime @updatedAt
 
   @@map("categories")
+  @@schema("products")
 }
 
 model Subcategory {
   id      String  @id @default(uuid())
+  mongoId String? @unique @db.VarChar(24)
   name    String  @unique @db.VarChar(500)
   url     String? @unique
   disable Boolean @default(false)
@@ -395,6 +485,7 @@ model Subcategory {
   updatedAt DateTime @updatedAt
 
   @@map("subcategories")
+  @@schema("products")
 }
 
 model PdevProductCategory {
@@ -412,6 +503,7 @@ model PdevProductCategory {
   products PdevProduct[]
 
   @@map("pdev_product_categories") // Maps it to a clean table name in your DB
+  @@schema("pdev_products")
 }
 
 model PdevProduct {
@@ -446,6 +538,7 @@ model PdevProduct {
   cartItems      CartItem[]
 
   @@map("pdev_products")
+  @@schema("pdev_products")
 }
 
 model PdevFileData {
@@ -460,6 +553,7 @@ model PdevFileData {
   product   PdevProduct @relation("ProductToFileData", fields: [productId], references: [id], onDelete: Cascade)
 
   @@map("pdev_file_data")
+  @@schema("pdev_products")
 }
 
 enum AppointmentStatus {
@@ -468,6 +562,8 @@ enum AppointmentStatus {
   Approved
   Scheduled
   Rejected
+
+  @@schema("users")
 }
 
 model Appointment {
@@ -488,6 +584,7 @@ model Appointment {
   updatedAt DateTime @updatedAt
 
   @@map("appointments")
+  @@schema("users")
 }
 
 model PdevProductCourseResult {
@@ -509,6 +606,7 @@ model PdevProductCourseResult {
   updatedAt DateTime @updatedAt
 
   @@map("pdev_product_course_results")
+  @@schema("users")
 }
 
 model HelpAndSupport {
@@ -527,6 +625,7 @@ model HelpAndSupport {
   updatedAt DateTime @updatedAt
 
   @@map("help_and_support_tickets")
+  @@schema("users")
 }
 
 model Coupon {
@@ -551,6 +650,7 @@ model Coupon {
   carts     Cart[]
 
   @@map("coupons")
+  @@schema("products")
 }
 
 model CouponProduct {
@@ -568,6 +668,7 @@ model CouponProduct {
   @@unique([couponId, productId, productType])
   @@index([productId])
   @@map("coupon_products")
+  @@schema("products")
 }
 
 model Order {
@@ -584,8 +685,8 @@ model Order {
   discountAmount     Decimal       @default(0.00) @db.Decimal(10, 2)
   taxAmount          Decimal       @default(0.00) @db.Decimal(10, 2)
   amount             Decimal       @db.Decimal(10, 2)
-  certCreditsApplied Float         @default(0)
-  creditsApplied     Float         @default(0)
+  certCreditsApplied Int         @default(0)
+  creditsApplied     Int         @default(0)
   notes              String?       @db.Text
   coupon             Json?
 
@@ -599,6 +700,7 @@ model Order {
   @@index([userId])
   @@index([createdAt, status])
   @@map("orders")
+  @@schema("users")
 }
 
 // Dedicated snapshot table for the order's billing details
@@ -616,6 +718,7 @@ model OrderBillingAddress {
   country       String
 
   @@map("order_billing_addresses")
+  @@schema("users")
 }
 
 model OrderProduct {
@@ -625,12 +728,13 @@ model OrderProduct {
   name      String
   quantity  Int     @default(1)
   salePrice Decimal @db.Decimal(10, 2)
-  type      String?
+  type      TargetProductType
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@map("order_products")
+  @@schema("users")
 }
 
 model Cart {
@@ -651,6 +755,7 @@ model Cart {
   @@index([userId])
   @@index([referralId])
   @@map("carts")
+  @@schema("users")
 }
 
 model CartItem {
@@ -658,43 +763,60 @@ model CartItem {
   cartId String
   cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
 
-  productId   String // Dynamic ID: references Product or PdevProduct
+  productId   String?          // Nullable: Filled if it's a standard Product
+  pdevProductId String?        // Nullable: Filled if it's a PdevProduct
   productType TargetProductType // Enum: 'Product' or 'PdevProduct'
   quantity    Int               @default(1)
 
   // Polymorphic foreign key mappings with distinct constraint names
   product     Product?     @relation(fields: [productId], references: [id], onDelete: Cascade, map: "cart_item_product_fkey")
-  pdevProduct PdevProduct? @relation(fields: [productId], references: [id], onDelete: Cascade, map: "cart_item_pdev_fkey")
+  pdevProduct PdevProduct? @relation(fields: [pdevProductId], references: [id], onDelete: Cascade, map: "cart_item_pdev_fkey")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([cartId, productId, productType]) // Prevents duplicating the same item in a single cart
+  @@unique([cartId, productId, productType], map: "cart_item_product_unique")
+  @@unique([cartId, pdevProductId, productType], map: "cart_item_pdev_unique")
   @@index([cartId])
   @@map("cart_items")
+  @@schema("users")
 }
 
 model LogTrail {
-  id          String      @id @default(uuid())
-  userId      String?     // Nullable for unauthenticated endpoints or guest actions
+  id          String  @id @default(uuid())
   accountType String?
   email       String?
 
-  action      String      // e.g., "USER_LOGIN", "ORDER_CREATED"
-  category    LogCategory
-  status      LogStatus   @default(SUCCESS)
-  stage       LogStage    @default(COMPLETED)
+  action   String // e.g., "USER_LOGIN", "ORDER_CREATED"
+  category LogCategory
+  status   LogStatus   @default(SUCCESS)
+  stage    LogStage    @default(COMPLETED)
 
   // Captures collectionName, documentId, and displayName as structured historical state snapshots
-  target      Json        @default("{}")
+  target Json @default("{}")
 
   // Captures description, ipAddress, userAgent, states, and error diagnostics cleanly
-  metaData    Json        @default("{}")
+  metaData Json @default("{}")
 
   // Overriding default name to match your Mongoose 'timestamp' createdAt setup
-  timestamp   DateTime    @default(now())
+  timestamp DateTime @default(now())
 
+  // ─── POLYMORPHIC RELATION FIELDS ─────────────────────────────────────────
+  // Optional foreign keys ensuring referencing integrity across your schemas
+  userId          String?
+  affiliateUserId String?
+  pdevUserId      String?
+
+  // Relations mapping back to their source tables in the "public" schema
+  user          User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  affiliateUser AffiliateUser? @relation(fields: [affiliateUserId], references: [id], onDelete: SetNull)
+  pdevUser      PdevUser?      @relation(fields: [pdevUserId], references: [id], onDelete: SetNull)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  @@index([affiliateUserId, timestamp(sort: Desc)])
+  @@index([pdevUserId, timestamp(sort: Desc)])
   @@index([userId, timestamp(sort: Desc)])
   @@index([category, action, timestamp(sort: Desc)])
   @@map("log_trails")
+  @@schema("users")
 }

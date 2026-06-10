@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { CategoriesService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { ApiOperation } from '@nestjs/swagger';
 
 @Controller('categories')
 export class CategoriesController {
@@ -13,8 +14,15 @@ export class CategoriesController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'Get all master categories with nested subcategories' })
   findAll() {
     return this.categoriesService.findAll();
+  }
+
+  @Get('categories/all')
+  @ApiOperation({ summary: 'Get all master categories' })
+  async getAllCategories() {
+    return this.categoriesService.findAllCategories();
   }
 
   @Get(':id')

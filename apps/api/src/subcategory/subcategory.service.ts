@@ -6,7 +6,7 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class SubcategoriesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(createSubcategoryDto: CreateSubcategoryDto) {
     try {
@@ -69,5 +69,28 @@ export class SubcategoriesService {
   async remove(id: string) {
     await this.findOne(id);
     return this.prisma.subcategory.delete({ where: { id } });
+  }
+
+  async findAllSubcategories() {
+    return this.prisma.subcategory.findMany({
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async findSubcategoriesByCategory(categoryId: string) {
+    const categoryExists = await this.prisma.category.findUnique({
+      where: { id: categoryId },
+    });
+
+    if (!categoryExists) {
+      throw new NotFoundException(`Category with ID "${categoryId}" not found`);
+    }
+
+    return this.prisma.subcategory.findMany({
+      where: {
+        categoryId: categoryId,
+      },
+      orderBy: { name: 'asc' },
+    });
   }
 }
