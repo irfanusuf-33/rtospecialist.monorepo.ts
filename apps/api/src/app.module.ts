@@ -22,7 +22,7 @@ import { MembershipsModule } from './memberships/memberships.module';
 import { StripeModule } from './stripe/stripe.module';
 import { MigrationModule } from './migration/migration.module';
 import { CheckoutModule } from './checkout/checkout.module';
-import { PaymentModule } from './payment/payment.module';
+import { PaymentsModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -42,7 +42,7 @@ import { PaymentModule } from './payment/payment.module';
     StripeModule,
     MigrationModule,
     CheckoutModule,
-    PaymentModule,
+    PaymentsModule,
   ],
 })
 export class AppModule {}
