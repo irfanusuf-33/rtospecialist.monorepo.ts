@@ -1,0 +1,43 @@
+@use "../mixins" as *;
+@use "../variables" as *;
+
+.courses-container {
+  gap: rem(16);
+  align-items: start;
+  padding: rem(0) rem(16) rem(40);
+    
+    .course-body {
+      grid-column: span 12;
+      padding: 0;
+
+      @include breakpoint-up (lg) {
+        grid-column: span 3;
+        position: sticky;
+        top: rem(110);
+        align-self: start;
+      }
+    }
+  
+    .course {
+      padding: 0;
+      grid-column: span 12;
+      
+      @include breakpoint-up(lg) {
+        grid-column: span 9;
+      }
+    }
+
+    &.sidebar-collapsed {
+      .course-body {
+        @include breakpoint-up(lg) {
+          grid-column: span 1;
+        }
+      }
+
+      .course {
+        @include breakpoint-up(lg) {
+          grid-column: span 11;
+        }
+      }
+    }
+  }

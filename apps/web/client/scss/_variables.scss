@@ -1,0 +1,118 @@
+$primary-font-family: "Poppins", sans-serif;
+$base-font-weight: 400;
+
+$red-gradient:#FFB6B65E;
+$golden-yellow-medium: #DDA243;
+$amber-350: #ffbf00;
+$amber-900: #78350F;
+$input-border: #889397;
+$light-gray: #f1f1f1;
+$light-gray-1: #f8f8f8;
+$gray-50: #f9fafb;
+$gray-100: #f1f5f9;
+$gray-200: #e5e7eb;
+$gray-300: #d1d5db;
+$gray-400: #9ca3af;
+$gray-500: #6b7280;
+$gray-600: #4b5563;
+$gray-700: #374151;
+$gray-800: #1f2937;
+$gray-900: #111827;
+
+$zinc-900: #18181b;
+
+$dark-silver: #6E6D6C;
+$chiffon-white: #f8ecd9;
+
+$blue-50: #eff6ff;
+$blue-100: #DBEAFE;
+$blue-150: #BBDEFB;
+$blue-300: #93c5fd;
+$blue-500: #3B82F6;
+$blue-550: #1E88E5;
+$blue-600: #2563eb;
+$blue-700: #1d4ed8;
+$blue-900: #1E3A8A;
+$blue-950: #1e88e533;
+
+$indigo-100: #dbeafe;
+$indigo-150: #C5CAE9;
+$light-black: #1a1a1a;
+$black: #000;
+$black-1: #1D1D1D;
+$white: #FFF;
+
+$red-50: #fef2f2;
+$red-75: #FFEBEE;
+$red-100: #fee2e2;
+$red-200: #fef2f2;
+$red-300: #fee2e2;
+$red-500: #ef4444;
+$red-600: #dc2626;
+$red-700: #B91C1C;
+$red-800: #991b1b;
+$red-900: #7f1d1d;
+
+$green-50: #f0fdf4;
+$green-100: #dcfce7;
+$green-600: #16a34a;
+$green-700: #16a34a;
+$green-800: #166534;
+$green-900: #14532d;
+
+$yellow-25: #faf3dd;
+$yellow-50: #fefce8;
+$yellow-75: #FEFAF5;
+$yellow-100: #fef9c3;
+$yellow-125: #f8e5c6;
+$yellow-500: #eab308;
+$yellow-600: #C48D35;
+$yellow-800: #f9a825;
+$yellow-900: #f57f17;
+$yellow-50: #fefce8;
+
+$orange-700: #854D0E;
+$orange-500: #f97316;
+$orange-600: #ea580c;
+
+$teal-100: #ccfbf1;
+$teal-200: #99f6e4;
+$teal-300: #6ee7b7;
+$teal-400: #34d399;
+$teal-600: #0d9488;
+$teal-700: #0f766e;
+$teal-900: #134e4a;
+
+
+// weights
+$font-light: 200;
+$font-small: 300;
+$font-regular: 400;
+$font-medium: 500;
+$font-semibold: 600;
+$font-bold: 700;
+$bg-gradient-fast: linear-gradient(180deg, rgba(30, 136, 229, 1) 0%, rgba(17, 75, 127, 1) 100%);
+$bg-gradient-lg: linear-gradient(90deg, rgba(30, 136, 229, 0.7) 0%, rgba(17, 75, 127, 0.7) 100%);
+$bg-gradient-light: linear-gradient(90deg, rgba(127, 127, 213, 1) 0%, rgb(104, 209, 202) 100%);
+$bg-gradient-medium: linear-gradient(90deg, rgba(49,183,194,1) 0%, rgba(123,195,147,1) 35%);
+$bg-gradient-xs: linear-gradient(90deg, rgba(127, 127, 213, 0.6) 0%, rgba(145, 234, 228, 0.6) 35%);
+$bg-gradient-md: linear-gradient(90deg, rgba(49,183,194,0.6) 0%, rgba(123,195,147,0.6) 35%);
+$bg-gradient-blue: linear-gradient(180deg, rgba(30, 136, 229, 0.21) 0%, rgba(255, 255, 255, 0.21) 100%);
+$aboutus-gradient-bottom: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.95) 80%);
+$aboutus-gradient-top: linear-gradient(to top, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 100%);
+$transparent-black: rgba(0,0,0,0.870588);
+$shadowred-xs: 4px 10px 30px $red-300;
+$shadow-xl:rgba(0, 0, 0, 0.24) 1px 1px 8px;
+$shadow-blue:  -6px 6px 12px rgba(0, 89, 255, 0.4), 2px -2px 5px rgba(16, 91, 230, 0.1);
+$shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+$shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+$shadow-xs: 0px 0px 200px -50px rgba(0, 0, 0, 0.719);
+$shadow-lg: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+
+// Define Breakpoint Variables
+$breakpoint-xs: 0;
+$breakpoint-sm: 576px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 992px;
+$breakpoint-xl: 1200px;
+$breakpoint-xxl: 1390px;

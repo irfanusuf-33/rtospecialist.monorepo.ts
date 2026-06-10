@@ -1,0 +1,295 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.StripeElement {
+    background-color: $light-gray-1;
+    border: rem(2) solid $gray-700;
+    border-radius: rem(6);
+    width: 100%;
+    padding: rem(12);
+    border: rem(1) solid $gray-300;
+    border-radius: rem(4);
+    margin-top: rem(8);
+  }
+
+  .cardholder-name {
+    padding: rem(8);
+    color: $black-1;
+
+    &:focus {
+      outline: rem(1) solid $gray-300;
+    }
+  }
+  
+  .StripeElement--focus {
+    outline: rem(3) solid $gray-200;
+  }
+  
+  .StripeElement--invalid {
+    border: rem(2) solid $red-600;
+    background-color: $red-200;
+    outline: rem(3) solid $red-300;
+    border-color: $red-600;
+  }
+  
+  .StripeElement--complete {
+    border: rem(3) solid $green-600;
+    outline: rem(2) solid $green-100;
+  }
+
+  .professional-dev-memb {
+
+    .memb-header {
+
+      .header-icons {
+        font-weight: $font-medium;
+        font-size: rem(14);
+        color: #6b7280;
+      }
+
+      &-right {
+        text-align: right;
+        margin-right: rem(8);
+      }
+    }
+
+    .divider {
+      height: rem(1);
+      background: $gray-100;
+      margin: rem(15) 0;
+    }
+
+    .memb-payment-container {
+      margin: rem(20) 0;
+
+      @include breakpoint-up(lg) {
+        padding: 0 rem(20);
+      }
+
+      .memb-left-container {
+        padding: rem(20) 0;
+        border-radius: rem(5);
+        box-shadow: $shadow-lg;
+        background-color: $white;
+  
+        .icon-container {
+          text-align: center;
+          margin-top: rem(50);
+  
+          .card-img {
+             width: rem(200);
+             height: rem(200);
+             margin: 0 auto;
+          }
+        }
+  
+        .heading {
+          font-size: rem(14);
+          color: $gray-700;
+          text-align: center;
+          font-weight: $font-medium;
+          margin: rem(30) 0 rem(4) 0;
+        }
+  
+        .content {
+          margin-top: rem(2);
+          text-align: center;
+          
+          .memb-price {
+            font-size: rem(36);
+            font-weight: $font-semibold;
+            color: $gray-800;
+            margin-bottom: rem(4);
+          }
+
+          .memb-tax {
+            margin-top: rem(4);
+            color: $gray-700;
+          }
+        }
+      }
+    }
+
+
+    .stripe-payment-form-container {
+      margin-top: rem(20);
+      overflow-y: scroll;
+      position: relative;
+      height: rem(500);
+
+      .default-cards-header {
+        font-weight: $font-medium;
+        font-size: rem(14);
+        color: $black-1;
+      }
+      
+      @include breakpoint-up(lg) {
+        margin: 0 rem(6);
+        padding: 0 rem(4);
+        overflow-x: hidden;
+        overflow-y: scroll;
+      }
+
+      .button-container {
+        position: relative;
+
+        .button-lock-img {
+          position: absolute;
+          z-index: 10;
+          right: rem(24);
+          top: 20%;
+        }
+
+        .payment-button {
+          @include button-primary-dark;
+        }
+      }
+
+      .card-skeleton {
+        width: 100%;
+        height: rem(120);
+
+        @include breakpoint-up(lg) {
+          width: calc(100%/3);
+        }
+      }
+
+      .default-cards-container {
+        margin: rem(20) 0;
+        display: flex;
+        gap: rem(16);
+
+        @include breakpoint-down(sm) {
+          flex-direction: column;
+        }
+
+        .card-selected {
+          border: rem(2) solid $black;
+        }
+
+        .method-container {
+          width: 100%;
+          border-radius: rem(5);
+          box-shadow: $shadow-lg;
+          padding: rem(20);
+
+          @include breakpoint-up(lg) {
+            width: calc(100%/3);
+          }
+
+          &:hover {
+            cursor: pointer;
+          }
+
+          .method-header, .method-body {
+            pointer-events: none;
+          }
+
+          .method-header {
+            display: flex;
+            justify-content: space-between;
+
+            .heading {
+              color: $black-1;
+              font-size: rem(14);
+              font-weight: $font-medium;
+              margin-bottom: rem(12);
+            }
+
+            .header-img {
+              width: rem(50);
+              object-fit: contain;
+            }
+          }
+
+          .method-body {
+            .body-text {
+              color: $black-1;
+              font-size: rem(12);
+            }
+          }
+        }
+      }
+    }
+}
+
+.card-form-container {
+
+  .card-form-header {
+    color: $black;
+    font-weight: $font-medium;
+    font-size: rem(14);
+    margin-bottom: rem(12);
+  }
+
+  .stripe-form {
+    padding: rem(32) rem(16);
+    border: rem(1) solid $gray-200;
+    border-radius: rem(5);
+
+    @include breakpoint-up(lg) {
+      padding-left: rem(48);
+      padding-right: rem(48);
+    }
+
+    .container {
+      display: grid;
+      gap: rem(24);
+    }
+
+    .container-card-2 {
+      display: grid;
+      gap: rem(16);
+    }
+
+    .card-input-label {
+      color: $gray-700;
+      font-size: rem(14);
+      font-weight: $font-medium;
+    }
+
+    .stripe-submit-block {
+      position: relative;
+      margin-top: rem(24);
+
+      .button-img {
+        position: absolute;
+        right: rem(24);
+        top: 22%;
+        z-index: 10;
+      }
+
+      .payment-button {
+        @include button-primary-dark;
+        padding: rem(12);
+      }
+    }
+
+    .card-number-container {
+      position: relative;
+
+      .brand-single-img {
+        right: rem(24);
+        position: absolute;
+        top: rem(40);
+
+        img {
+          width: rem(48);
+        }
+      }
+
+      .brand-multiple-img {
+        position: absolute;
+        top: rem(45);
+        right: 28%;
+        display: flex;
+        align-items: flex-end;
+        width: rem(35);
+
+        @include breakpoint-up(lg) {
+          right: 20%;
+        }
+      }
+    }
+  }
+}

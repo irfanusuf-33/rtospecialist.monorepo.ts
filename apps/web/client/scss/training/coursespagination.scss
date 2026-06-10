@@ -1,0 +1,55 @@
+@use "../mixins" as *;
+@use "../variables" as *;
+
+.pagination-container {
+    margin-top: rem(24);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: rem(10);
+}
+
+.first-button,
+.last-button,
+.prev-button,
+.next-button,
+.page-button {
+    padding: rem(8) rem(12);
+    border: none;
+    background-color: $white;
+    color: $black;
+    cursor: pointer;
+    border-radius: rem(5);
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.page-button {
+    width: rem(32);
+    height: rem(32);
+    border-radius: 50%;
+    text-align: center;
+    background-color: $white;
+    color: $gray-800;
+    font-weight: $font-regular;
+    &.active {
+        background-color: $black;
+        color: $white;
+        font-weight: $font-bold;
+    }
+    &:hover:not(.active) {
+        background-color: $gray-100;
+    }
+}
+
+.first-button.disabled,
+.last-button.disabled,
+.prev-button.disabled,
+.next-button.disabled,
+.page-button:disabled {
+    background-color: $gray-300;
+    cursor: not-allowed;
+    color: $gray-400;
+}

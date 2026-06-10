@@ -1,0 +1,62 @@
+@use "../mixins" as *;
+@use "../variables" as *;
+
+.skeleton-product-tile {
+    margin: 0 rem(8) rem(8);
+    width: rem(288);
+    display: flex;
+    position: relative;
+    justify-content: end;
+    flex-direction: column;
+    border: rem(1) solid $gray-300;
+    border-radius: rem(8);
+    color: $gray-700;
+    background-color: $white;
+    box-shadow: $shadow-lg;
+    background-clip: border-box;
+    animation: pulse 1s ease-in-out infinite;
+
+    .tile-inner {
+        padding: rem(24);
+
+        &-content {
+            display: block;
+            height: rem(14);
+            margin-bottom: rem(16);
+            font-size: rem(24);
+            background-color: $gray-300;
+            border-radius: rem(12);
+        }
+
+        .tile-price {
+            width: rem(128);
+            margin: auto;
+            border-radius: rem(30);
+            height: rem(50);
+        }
+    }
+
+    .button-container {
+        padding: rem(8) rem(24) rem(24);
+        
+        .skeleton-button {
+            width: 100%;
+            height: rem(48);
+            background-color: $gray-300;
+            padding: rem(12) rem(24);
+            border-radius: rem(8);
+        }
+    }
+}
+
+@keyframes pulse {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+    100% {
+      opacity: 1;
+    }
+}

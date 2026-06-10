@@ -1,0 +1,125 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.consultation-second-header-container {
+    position: relative;
+    color: $white;
+    overflow: hidden;
+
+    .consultation-picture {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 0;
+
+        .picture {
+            max-width: 100%;
+            height: auto;
+
+            display: block;
+            margin: 0 auto;
+
+            object-fit: cover;
+            object-position: center;
+        }
+    }
+
+    .consultation-gradient-overlay {
+        position: absolute;
+        inset: 0;
+        background: $bg-gradient-light;
+        opacity: 0.9;
+        z-index: 1;
+    }
+
+    .consultation-body-container {
+        margin: 0 auto rem(64);
+        padding: rem(96) rem(16);
+        position: relative;
+        z-index: 10;
+
+        @include breakpoint-up(md) {
+            padding: rem(128) rem(16);
+        }
+
+        .inner-body-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+
+            @include breakpoint-up(md) {
+                flex-direction: row;
+            }
+        }
+
+        .inner-body-wrapper {
+            width: 100%;
+            margin-bottom: rem(48);
+
+            @include breakpoint-up(md) {
+                width: 50%;
+                margin-bottom: 0;
+            }
+
+            .body-heading {
+                font-size: rem(48);
+                font-weight: bold;
+                margin-bottom: rem(24);
+                line-height: 1;
+
+                @include breakpoint-up(md) {
+                    font-size: rem(60);
+                }
+            }
+
+            .body-text {
+                font-size: rem(20);
+                margin-bottom: rem(32);
+                color: $gray-300;
+            }
+
+            .button-container {
+                display: flex;
+                flex-direction: column;
+                gap: rem(16);
+              
+                @include breakpoint-up(sm) {
+                  flex-direction: row;
+                  gap: 0 rem(16);
+                }
+
+                .get-started-btn {
+                    background-color: $white;
+                    color: $blue-900; /* Tailwind's blue-900 */
+                    font-weight: $font-semibold;
+                    padding: rem(12) rem(32);
+                    border-radius: rem(9999);
+                    text-align: center;
+                    transition: background-color 0.3s;
+                   
+                    &:hover {
+                      background-color: $blue-100; /* Tailwind's blue-100 */
+                    }
+                }
+
+                .learn-more-btn {
+                    border: rem(2) solid $white;
+                    color: $white;
+                    font-weight: $font-semibold;
+                    padding: rem(12) rem(32);
+                    border-radius: rem(9999);
+                    text-align: center;
+                  
+                    &:hover {
+                      background-color: $white;
+                      color: $blue-900; /* Tailwind's blue-900 */
+                    }
+                  }
+                  
+            }
+        }
+    }
+}

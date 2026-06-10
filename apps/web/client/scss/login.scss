@@ -1,0 +1,133 @@
+@use "./mixins" as *;
+@use "./variables" as *;
+
+.login-page-container {
+    display: grid;
+    text-align: center;
+    align-items: center;
+    background-color: $gray-100;
+
+    .page-container-inner {
+        box-shadow: $shadow-lg;
+        padding: rem(32);
+        margin: rem(16) rem(8);
+        border-radius: rem(8);
+        background-color: $white;
+
+        @include breakpoint-up(lg) {
+            width: 50%;
+            margin: rem(16) auto;
+        }
+
+        .inner-header {
+            color: $black-1;
+            font-size: rem(35);
+            font-weight: $font-semibold;
+        }
+
+        .inner-text {
+            margin-bottom: rem(48);
+            color: $gray-600;
+            font-weight: $font-medium;
+            font-size: rem(14);
+        }
+
+        .login-form {
+            margin: auto;
+            text-align: left;
+            max-width: rem(385);
+
+            .input-container {
+                margin-bottom: rem(24);
+
+                .input-label {
+                    font-weight: $font-medium;
+                    font-size: rem(14);
+                    color: $black-1;
+                }
+
+                .input-field {
+                    @include primary-input;
+                    margin-top: rem(8);
+                }
+
+                .input-error {
+                    border: rem(1) solid $red-600;
+                }
+
+                .err-msg {
+                    color: $red-900;
+                    font-size: rem(12);
+                }
+
+                .visibility-icon {
+                    position: absolute;
+                    right: rem(15);
+                    top: rem(40);
+                    color: $gray-600;
+                }
+            }
+
+            .visibility {
+                position: relative;
+            }
+
+            .container-inner {
+                display: flex;
+                justify-content: space-between;
+
+                .pwd-reset-link {
+                    font-size: rem(12);
+                    color: $gray-800;
+                    text-decoration: underline;
+                }
+
+            }
+
+            .login-submit-btn {
+                @include button-primary-dark;
+            }
+
+            .login-footer {
+                text-align: center;
+                margin-top: rem(16);
+                font-weight: $font-regular;
+                color: $gray-600;
+                font-size: rem(12);
+
+                .redirect-link {
+                    font-weight: $font-medium;
+                    color: $black-1;
+
+                    &:hover {
+                        text-underline-offset: rem(2);
+                        text-decoration: underline;
+                    }
+                }
+            }
+
+            .second {
+                margin-bottom: rem(4);
+            }
+        }
+
+        .account-type-btn-block {
+            margin-top: rem(12);
+
+            .account-type-dropdown {
+                width: 100%;
+                font-size: rem(14);
+                color: $gray-800;
+                padding: rem(10);
+                border: rem(1) solid $gray-400;
+                border-radius: rem(6);
+                margin-bottom: rem(16);
+
+                .option-default {
+                    font-size: rem(14);
+                    color: $gray-800;
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,36 @@
+@use "./mixins" as *;
+@use "./variables" as *;
+
+.global-toast {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: $white;
+    animation: mobileToastAnimation 0.5s forwards;
+    opacity: 0;
+    min-width: rem(310);
+    height: rem(50);
+    background-color: $transparent-black;
+    z-index: 999999;
+  }
+  
+  @media only screen and (min-width: 768px) {
+    .global-toast {
+      animation-name: lgToastAnimation;
+      top: 100%;
+      padding-left: rem(50);
+      padding-right: rem(50);
+      width: auto;
+    }
+  }
+  
+  @keyframes mobileToastAnimation {
+      from {top: 10%; opacity: 0}
+      to {top: 18%; opacity: 1}
+  }
+  
+  @keyframes lgToastAnimation {
+    from {top: 25%; opacity: 0}
+    to {top: 35%; opacity: 1}
+  }
