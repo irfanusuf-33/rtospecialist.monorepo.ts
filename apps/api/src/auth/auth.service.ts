@@ -34,6 +34,7 @@ export class AuthService {
       phoneNumber: dto.phoneNumber,
       jobRole: dto.jobRole,
       company: dto.company,
+      interestType: dto.interestType,
     });
 
     return {

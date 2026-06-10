@@ -46,4 +46,9 @@ export class RegisterDto implements CreateUserDto {
   @IsString()
   @IsOptional()
   company?: string;
+
+  @ApiPropertyOptional({ example: 'ICT qualification' })
+  @IsString()
+  @IsOptional()
+  interestType?: string;
 }

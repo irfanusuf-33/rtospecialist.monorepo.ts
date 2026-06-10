@@ -42,6 +42,7 @@ export class UsersService {
     phoneNumber: string;
     jobRole?: string;
     company?: string;
+    interestType?: string;
   }) {
     return this.prisma.user.create({
       data: {

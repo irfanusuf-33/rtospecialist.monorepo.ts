@@ -10,6 +10,7 @@ export interface CreateUserDto {
   phoneNumber: string;
   jobRole?: string;
   company?: string;
+  interestType?: string;
 }
 
 // Update user request body (all optional)
