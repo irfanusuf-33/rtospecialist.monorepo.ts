@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CartsService } from './carts.service';
-import { CreateCartDto } from './dto/create-cart.dto';
+import { AddCartItemDto, AddMultipleCartItemsDto, CreateCartDto } from './dto/create-cart.dto';
 import { UpdateCartDto } from './dto/update-cart.dto';
+import { RemoveCartItemDto } from './dto/remove-cart-item.dto';
 
 @ApiTags('Shopping Carts Engine')
 @Controller('carts')
@@ -34,5 +35,36 @@ export class CartsController {
   @ApiOperation({ summary: 'Flush out all tracking item allocations from an active session cart' })
   clear(@Param('userId') userId: string) {
     return this.cartsService.clearCart(userId);
+  }
+
+  @Post('add-single')
+  @ApiOperation({ summary: 'Add a single product to cart (Increments if existing)' })
+  async addSingleItemToCart(
+    @Body() addCartItemDto: AddCartItemDto,
+    @Req() req: any
+  ) {
+    const userId = req.user?.id || 'cmq1xw6790000vj2809dnzrkk';
+    return this.cartsService.addToCart(userId, addCartItemDto);
+  }
+
+  @Post('add-multiple')
+  @ApiOperation({ summary: 'Add an array block of product/pdev elements to cart' })
+  async addMultipleItemsToCart(
+    @Body() addMultipleCartItemsDto: AddMultipleCartItemsDto,
+    @Req() req: any
+  ) {
+    const userId = req.user?.id || 'cmq1xw6790000vj2809dnzrkk';
+    return this.cartsService.addMultipleItemsToCart(userId, addMultipleCartItemsDto);
+  }
+
+  @Delete('remove-item')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Remove a single item from the cart entirely' })
+  async removeSingleItemFromCart(
+    @Body() removeCartItemDto: RemoveCartItemDto,
+    @Req() req: any
+  ) {
+    const userId = req.user?.id || 'cmq1xw6790000vj2809dnzrkk';
+    return this.cartsService.removeSingleItem(userId, removeCartItemDto);
   }
 }

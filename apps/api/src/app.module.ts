@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-
+import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -18,9 +18,16 @@ import { OrdersModule } from './orders/orders.module';
 import { CouponsModule } from './coupons/coupons.module';
 import { CartsModule } from './carts/carts.module';
 import { LogsModule } from './log-trails/log-trails.module';
+import { MembershipsModule } from './memberships/memberships.module';
+import { StripeModule } from './stripe/stripe.module';
+import { MigrationModule } from './migration/migration.module';
+import { CheckoutModule } from './checkout/checkout.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
-  imports: [AuthModule, UsersModule, PrismaModule, ProductsModule, SubcategoriesModule, CategoriesModule, AdminsModule, PdevProductCategoryModule,
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    AuthModule, UsersModule, PrismaModule, ProductsModule, SubcategoriesModule, CategoriesModule, AdminsModule, PdevProductCategoryModule,
     PdevProductsModule,
     AffiliateUserModule,
     AppointmentsModule,
@@ -31,6 +38,11 @@ import { LogsModule } from './log-trails/log-trails.module';
     CouponsModule,
     CartsModule,
     LogsModule,
+    MembershipsModule,
+    StripeModule,
+    MigrationModule,
+    CheckoutModule,
+    PaymentModule,
   ],
 })
 export class AppModule {}
