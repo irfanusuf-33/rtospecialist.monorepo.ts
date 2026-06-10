@@ -1,0 +1,48 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.rto-consulting-why-register-container {
+    padding: rem(56) 0;
+    background-color: $gray-50;
+    color: $zinc-900;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+
+    @include breakpoint-up(md) {
+        padding: rem(48) 0 rem(96) 0;
+    }
+
+    .rto-consulting-why-register-wrapper {
+        padding: 0 rem(16);
+        margin: 0 auto;
+
+        .rto-consulting-why-register-header {
+            margin-bottom: rem(32);
+
+            .rto-consulting-why-register-heading {
+                font-size: rem(30);
+                font-weight: $font-bold;
+                line-height: 1.5;
+                margin-bottom: rem(16);
+
+                @include breakpoint-up(md) {
+                    font-size: rem(40);
+                }
+            }
+
+            .rto-consulting-why-register-secondary {
+                font-size: rem(16);
+                line-height: 1.5;
+                color: $black-1;
+                margin-bottom: rem(96);
+            }
+        }
+
+        .rto-consulting-why-register-body {
+            gap: rem(24);
+            row-gap: rem(36);
+            justify-content: center;
+        }
+    }
+}

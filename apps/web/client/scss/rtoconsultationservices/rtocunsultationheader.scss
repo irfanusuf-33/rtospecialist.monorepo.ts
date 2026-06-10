@@ -1,0 +1,75 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.rto-consultation-header-container {
+    margin-bottom: rem(40);
+    margin-left: auto;
+    margin-right: auto;
+    flex-direction: column;
+    background: linear-gradient(to right, $blue-150, $indigo-150);
+    padding: 0 rem(16);
+    .rto-consultation-main-heading {
+        margin: rem(48) auto rem(24) ;
+        text-align: center;
+        font-size: rem(48);
+        font-weight: $font-semibold;
+        color: $black-1;
+        line-height: 1;
+    }
+
+    .rto-consultation-header-heading {
+        margin: auto;
+        text-align: center;
+        font-size: rem(36);
+        font-weight: $font-semibold;
+        color: $gray-700;
+        line-height: 1;
+    }
+
+    .rto-consultation-header-secondary {
+        display: none;
+        margin: rem(16) auto 0;
+        max-width: rem(1024);
+        text-align: center;
+        color: $black-1;
+        font-size: rem(16);
+
+        @include breakpoint-up(sm) {
+            display: block;
+            margin-top: rem(32);
+            font-size: rem(18);
+            line-height: rem(28);
+        }
+    }
+
+    .rto-consultation-header-button-container {
+        margin: rem(32) auto rem(80);
+        flex-direction: column;
+        gap: rem(8);
+
+        @include breakpoint-up(sm) {
+            width: auto;
+            flex-direction: row;
+            gap: rem(24);
+        }
+
+        .rto-consultation-header-button {
+            padding: rem(12) rem(40);
+            border-radius: 0.5rem;
+            font-weight: $font-medium;
+            color: $white;
+            background-color: $black;
+            transition: all 300ms;
+
+            &:hover {
+                box-shadow: $shadow-lg;
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+
+            @include breakpoint-up(sm) {
+                width: auto;
+            }
+        }
+    }
+}

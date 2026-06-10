@@ -1,0 +1,49 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.card-skeleton-container {
+    height: rem(32);
+    padding: rem(8);
+    box-shadow: $shadow-lg;
+    border-radius: rem(8);
+
+    .inner-container {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: rem(12);
+        padding: rem(8);
+
+        &-content {
+            background-color: $gray-200;
+            width: 100%;
+            height: rem(56);
+            border-radius: rem(8);
+            animation: pulse 1s ease-in-out infinite;
+        }
+    }
+
+    .container-right {
+        padding: rem(8);
+        
+        &-content {
+            background-color: $gray-200;
+            width: rem(96);
+            height: rem(32);
+            border-radius: rem(20);
+            animation: pulse 1s ease-in-out infinite;
+        }
+    }
+}
+
+@keyframes pulse {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+    100% {
+      opacity: 1;
+    }
+}
