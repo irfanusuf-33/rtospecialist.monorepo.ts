@@ -1,0 +1,126 @@
+@use "../mixins" as *;
+@use "../variables" as *;
+
+.quiz-result-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  
+    .result-box {
+      padding: rem(20);
+      border: rem(1) solid $gray-200;
+      border-radius: rem(6);
+      text-align: center;
+      color: $gray-900;
+  
+      .result-heading {
+        font-size: rem(14);
+        font-weight: $font-medium;
+        margin-top: rem(10);
+      }
+  
+      .result-details {
+        font-size: rem(12);
+        margin: rem(5) 0;
+      }
+  
+      .result-status {
+        margin-top: rem(10);
+        font-size: rem(14);
+  
+        &.passed {
+          color: $green-600;
+        }
+  
+        &.failed {
+          color: $red-600;
+        }
+      }
+  
+      .result-icon {
+        margin-bottom: rem(10);
+      }
+  
+      &.passed {
+        background-color: $green-50;
+  
+        .result-status {
+          color: $green-600;
+        }
+  
+        .status-icon {
+          font-size: rem(60);
+          color: $green-700;
+        }
+      }
+  
+      &.failed {
+        background-color: $red-50;
+  
+        .result-status {
+          color: $red-700;
+        }
+  
+        .status-icon {
+          font-size: rem(60);
+          color: $red-700;
+        }
+      }
+    }
+  
+    .certification-button,
+    .retry-button {
+      margin-top: rem(10);
+      padding: rem(12) 0;
+      border: none;
+      border-radius: rem(4);
+      cursor: pointer;
+      font-size: rem(14);
+      font-weight: $font-medium;
+      color: $white;
+  
+      &:hover {
+        opacity: 0.9;
+      }
+  
+      &.certification-button {
+        background-color: $green-700;
+  
+        &:hover {
+          background-color: $green-800;
+        }
+      }
+  
+      &.retry-button {
+        background-color: $red-700;
+  
+        &:hover {
+          background-color: $red-800;
+        }
+      }
+    }
+  }
+  
+  .quiz-result-dialog-header {
+    display: flex;
+    justify-content: space-between;
+  
+    .quiz-result-dialog-heading {
+      font-size: rem(16);
+    }
+  
+    .quiz-result-dialog-icon {
+      color: $gray-700; 
+      font-size: rem(20);
+      border: none;
+  
+  
+      &:hover {
+        color: $gray-900;
+      }
+  
+      &:focus {
+        outline: none;
+      }
+    }
+  }

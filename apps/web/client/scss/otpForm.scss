@@ -1,0 +1,59 @@
+@use "./mixins" as *;
+@use "./variables" as *;
+
+.otp-form-container {
+    max-width: rem(450);
+    text-align: center;
+    margin: auto;
+    background-color: $white;
+    padding: rem(40) rem(24);
+    border-radius: rem(8);
+    border: rem(1) solid $gray-300;
+
+    .container-header {
+        margin-bottom: rem(32);
+
+        &-text {
+            font-weight: $font-medium;
+            margin-bottom: rem(4);
+        }
+
+        &-info {
+            font-size: rem(12);
+            color: $gray-700;
+        }
+    }
+
+    .otp-form {
+
+        &-block {
+            margin: rem(16);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: rem(8);
+
+            .input-field {
+                @include primary-input;
+            }
+
+            .input-divider {
+                font-size: rem(24);
+                color: $gray-700;
+            }
+
+        }
+        
+        .err-msg {
+            color: $red-600;
+            font-size: rem(12);
+        }
+
+        .btn-block {
+            .otp-submit-btn {
+                @include button-primary-dark;
+                width: rem(370);
+            }
+        }
+    }
+}

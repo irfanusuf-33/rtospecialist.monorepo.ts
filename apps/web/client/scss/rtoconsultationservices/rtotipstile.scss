@@ -1,0 +1,58 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.tips-tile-conatainer {
+    @include breakpoint-up(lg) {
+        margin-left: rem(24);
+    }
+
+    @include breakpoint-up(xl) {
+        margin-left: rem(48);
+    }
+
+    .tips-tile-wrapper {
+        position: relative;
+        padding: rem(12);
+        margin-bottom: rem(16);
+        background-color: $white;
+        box-shadow: $shadow-xl;
+
+
+        @include breakpoint-up(md) {
+            padding: rem(24);
+        }
+
+        @include breakpoint-up(lg) {
+            margin-bottom: rem(24);
+        }
+
+        @include breakpoint-up(xl) {
+            padding: rem(48);
+        }
+
+        .tips-tile-icon {
+            margin-right: 0;
+            margin-bottom: rem(24);
+            border-radius: rem(9999);
+            color: $blue-550;
+            font-size: rem(42);
+
+            @include breakpoint-up(xl) {
+                margin-right: rem(32);
+            }
+        }
+
+        .tips-tile-heading {
+            margin-bottom: rem(16); 
+            font-size: rem(22);
+            line-height: rem(30); 
+            font-weight: $font-medium; 
+        }
+
+        .tips-tile-desc {
+            font-size: rem(14);
+            line-height: rem(20);
+            color: $black-1;
+        }
+    }
+}

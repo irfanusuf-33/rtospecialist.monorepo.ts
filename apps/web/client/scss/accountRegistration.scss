@@ -1,0 +1,121 @@
+@use "./mixins" as *;
+@use "./variables" as *;
+
+.registration-page-container {
+    display: grid;
+    text-align: center;
+    background-color: $gray-100;
+    padding: rem(0) rem(48);
+
+    .page-container-inner {
+        box-shadow: $shadow-lg;
+        padding: rem(32);
+        margin-top: rem(16);
+        border-radius: rem(8);
+        background-color: $white;
+
+        @include breakpoint-up(lg) {
+            width: 50%;
+            margin: rem(16) auto;
+        }
+
+        .inner-header {
+            color: $black-1;
+            font-size: rem(35);
+            font-weight: $font-semibold;
+        }
+
+        .inner-text {
+            margin-bottom: rem(48);
+            color: $gray-600;
+            font-weight: $font-medium;
+            font-size: rem(14);
+
+            &-name {
+                font-weight: $font-medium;
+                color: $black-1;
+            }
+        }
+
+        .signup-form {
+            margin: auto;
+            text-align: left;
+            max-width: rem(385);
+
+            .input-group {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: rem(16);
+
+                @include breakpoint-up(md) {
+                    flex-direction: row;
+                }
+            }
+
+            .input-container {
+                margin-bottom: rem(24);
+                width: 100%;
+
+                .input-label {
+                    font-weight: $font-medium;
+                    font-size: rem(14);
+                    color: $black-1;
+                }
+
+                .input-field {
+                    @include primary-input;
+                    margin-top: rem(8);
+                }
+
+                .input-error {
+                    border: rem(1) solid $red-600;
+                }
+
+                .err-msg {
+                    color: $red-900;
+                    font-size: rem(12);
+                }
+
+                .pwd-info {
+                    display: flex;
+                    padding-top: rem(1);
+                    font-size: rem(12);
+                }
+            }
+
+            .visibility-icon {
+                position: absolute;
+                right: rem(15);
+                top: rem(40);
+                color: $gray-600;
+            }
+
+            .visibility {
+                position: relative;
+            }
+
+            .signup-footer {
+                text-align: center;
+                margin-top: rem(16);
+                font-weight: $font-regular;
+                color: $gray-600;
+                font-size: rem(12);
+
+                .redirect-link {
+                    font-weight: $font-medium;
+                    color: $black-1;
+
+                    &:hover {
+                        text-underline-offset: rem(2);
+                        text-decoration: underline;
+                    }
+                }
+            }
+
+            .signup-submit-btn {
+                @include button-primary-dark;
+            }
+        }
+    }
+}

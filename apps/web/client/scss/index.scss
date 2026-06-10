@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@use './variables' as *;
+@use './mixins' as *;
+
+@import 'pageloader';
+@import 'globaltoast';
+@import 'profile';
+@import './navigation';
+@import './footer';
+@import './modals';
+
+*, ::before, ::after, body {
+  padding: 0;
+  margin: 0;
+  font-family: $primary-font-family !important;
+  font-weight: $base-font-weight;
+  scroll-behavior: smooth !important;
+}
+
+@-moz-document url-prefix() {
+  * {
+    scrollbar-color: $golden-yellow-medium $light-gray;  /* Thumb color (golden) and Track color (light grey) */
+    scrollbar-width: thin;  /* Thin scrollbar */
+  }
+
+  /* Specific element styling for scrollable content */
+  .scrollable-content {
+    scrollbar-color: $golden-yellow-medium $light-gray;
+    scrollbar-width: thin;
+  }
+}
+
+
+::-webkit-scrollbar,
+::-webkit-scrollbar-thumb {
+  width: rem(6);
+}
+
+::-webkit-scrollbar-thumb {        
+  background-color: $golden-yellow-medium; 
+  border-radius: rem(8);       
+  background-clip: padding-box; 
+}
+/* For Firefox */
+input[type=number] {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+/* For Chrome, Safari, Edge */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0; /* Optional: to remove spacing */
+}

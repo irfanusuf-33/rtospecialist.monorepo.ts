@@ -1,0 +1,64 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.key-consideration-container {
+    padding: rem(56) 0;
+    background: $white;
+    color: $zinc-900;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    
+    @include breakpoint-up(md) {
+      padding: rem(96) 0; 
+    }
+
+    .key-consideration-wrapper {
+        padding: 0 rem(16);
+        margin: 0 auto;
+
+        .key-consideration-design {
+                position: absolute;
+                top: rem(64);
+                right: 0;
+                bottom: rem(64);
+                left: 50%;
+                border-radius: rem(30) 0 0 rem(30);
+                background: rgba(37, 99, 235, 0.1);
+                width: 100vw;
+                z-index: -1;
+                
+                @include breakpoint-up(lg) {
+                  left: 60%;
+                }
+        }
+
+        .key-consideration-heading-container {
+            margin-bottom: rem(48); 
+            width: 100%; 
+            max-width: rem(576); 
+
+            .key-consideration-heading {
+                margin-bottom: rem(16); 
+                font-size: rem(30);
+                font-weight: $font-bold; 
+                line-height: 1; 
+                
+                @include breakpoint-up(md) { 
+                  font-size: rem(40);
+                 }
+            }
+        }
+
+        .key-consideration-wrapper-tiles {
+            margin: 5rem auto 0;
+            gap: rem(24);
+            row-gap: rem(96);
+            
+            @include breakpoint-up(md) {
+              row-gap: 0;
+            }
+          }
+          
+    }
+}

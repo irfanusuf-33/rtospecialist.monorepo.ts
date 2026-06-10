@@ -1,0 +1,160 @@
+// @function rem($px) {
+//     @return $px / 16 + rem;
+// }
+@use './_variables' as *;
+
+
+@function rem($px) {
+    @return calc($px / 16) * 1rem;
+}
+
+
+
+@mixin button-primary-dark {
+  width: 100%;
+  padding: rem(10) rem(0);
+  background-color: $black-1;
+  color: $white;
+  border: none;
+  border-radius: rem(5);
+  font-size: rem(14);
+  font-weight: $font-medium;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+ 
+// Mixin for different breakpoints, passing a symbol like 'lg' or 'md'
+
+@mixin breakpoint-up($size) {
+    @if $size == sm {
+      @media (min-width: $breakpoint-sm) {
+        @content;
+      }
+    }
+    @else if $size == md {
+      @media (min-width: $breakpoint-md) {
+        @content;
+      }
+    }
+    @else if $size == lg {
+      @media (min-width: $breakpoint-lg) {
+        @content;
+      }
+    }
+    @else if $size == xl {
+      @media (min-width: $breakpoint-xl) {
+        @content;
+      }
+    }
+    @else if $size == xxl {
+      @media (min-width: $breakpoint-xxl) {
+        @content;
+      }
+    }
+  }
+
+  @mixin add-blue-button {
+    padding: rem(16) 0; 
+    border-radius: rem(8); 
+    font-size: rem(14);
+    font-weight: $font-medium; 
+    color: $white; 
+    background-color: $blue-600; 
+    width: 100%;
+    
+    &:hover {
+      background-color: $blue-700; 
+    }
+  }
+
+  @mixin cancel-outlined-button {
+    padding: rem(16) 0; 
+    border-radius: rem(8); 
+    border-width: rem(1); 
+    border-color: $blue-600; 
+    font-size: rem(12);
+    font-weight: $font-medium; 
+    color: $blue-600; 
+    transition-property: all;
+    transition-duration: 300ms;
+    
+    &:hover {
+      color: $white; 
+      background-color: $blue-600; 
+    }
+  }
+
+  @mixin dashboard-input-field {
+    padding: rem(8) rem(12); 
+    border-radius: rem(6); 
+    border-width: rem(1); 
+    border-color: $gray-300; 
+    width: 100%; 
+    font-size: rem(14);
+    line-height: rem(20); 
+  }
+
+@mixin primary-input {
+  display: block;
+  width: 100%;
+  border: rem(1) solid $input-border;
+  border-radius: rem(6);
+  padding: rem(0) rem(15);
+  height: rem(44);
+  transition: outline 300ms ease-in-out;
+  font-size: rem(12);
+
+  &::placeholder {
+      font-size: rem(12);
+  }
+
+  &:focus {
+      outline-width: rem(2);
+      outline-color: $black;
+  }
+}
+
+@mixin btn-secondary {
+  width: 100%;
+  background-color: $red-600;
+  height: rem(44);
+  border-radius: rem(6);
+  color: $white;
+  font-weight: $font-medium;
+  text-transform: uppercase;
+  font-size: rem(14);
+
+  &:hover {
+      background-color: $red-700;
+  }
+}
+
+@keyframes wave {
+  50% {
+    transform: scale(0.9);
+  }
+}
+
+@mixin breakpoint-down($size) {
+  @if $size == sm {
+    @media (max-width: $breakpoint-sm) {
+      @content;
+    }
+  }
+  @else if $size == md {
+    @media (max-width: $breakpoint-md) {
+      @content;
+    }
+  }
+  @else if $size == lg {
+    @media (max-width: $breakpoint-lg) {
+      @content;
+    }
+  }
+  @else if $size == xl {
+    @media (max-width: $breakpoint-xl) {
+      @content;
+    }
+  }
+}
+  

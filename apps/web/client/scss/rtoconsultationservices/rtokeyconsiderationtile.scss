@@ -1,0 +1,50 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.key-consideration-tile-container {
+    margin-bottom: rem(64);
+    grid-column: span 3 / span 3;
+
+    @include breakpoint-up(md) {
+        grid-column: span 1 / span 1;
+    }
+
+    .key-consideration-tile-wrapper {
+        background-color: $white;
+        box-shadow: $shadow-xl;
+        border-radius: rem(16);
+        padding: rem(24) rem(24) rem(48);
+        height: 100%;
+
+        .tile-icon { 
+            margin-top: rem(-64); 
+            justify-content: center; 
+            align-items: center; 
+            border-radius: rem(9999); 
+            width: rem(80); 
+            height: rem(80); 
+            font-size: rem(30);
+            line-height: rem(36); 
+            color: $blue-550; 
+            background-color: $white; 
+            box-shadow: $shadow-xl; 
+        }
+
+        .key-consideration-tile-body {
+            margin-top: rem(24);
+
+            .tile-heading {
+                margin-bottom: rem(16); 
+                font-size: rem(22);
+                line-height: rem(30); 
+                font-weight: $font-medium; 
+            }
+
+            .tile-desc {
+                color: $black-1;
+                font-size: rem(14);
+                line-height: rem(20); 
+            }
+        }
+    }
+}
