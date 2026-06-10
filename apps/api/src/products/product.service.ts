@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { QueryPaginationDto } from './dto/query-pagination.dto';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -12,7 +13,7 @@ export class ProductsService {
     try {
       const formattedProductId = createProductDto.productId.trim().toUpperCase();
       const formattedLink = createProductDto.link?.trim().toLowerCase();
-      
+
       // 1. Extract categoryIds, subcategoryIds, and JSON sections from the DTO payload
       const { categoryIds, subcategoryIds, productDetailsSections, ...restOfDto } = createProductDto;
 
@@ -22,7 +23,7 @@ export class ProductsService {
           productId: formattedProductId,
           link: formattedLink,
           productDetailsSections: productDetailsSections as any,
-          
+
           // 2. Map the ID strings to true PostgreSQL relational connections
           categories: {
             connect: categoryIds?.map(id => ({ id })) || [],
@@ -57,14 +58,14 @@ export class ProductsService {
   }
 
   async findOne(id: string) {
-    const product = await this.prisma.product.findUnique({ 
+    const product = await this.prisma.product.findUnique({
       where: { id },
       include: {
         categories: true,
         subcategories: true,
       },
     });
-    
+
     if (!product) {
       throw new NotFoundException(`Product with ID "${id}" not found`);
     }
@@ -79,7 +80,7 @@ export class ProductsService {
         subcategories: true,
       },
     });
-    
+
     if (!product) {
       throw new NotFoundException(`Product with product ID "${productId}" not found`);
     }
@@ -103,7 +104,7 @@ export class ProductsService {
         ...(productDetailsSections && {
           productDetailsSections: productDetailsSections as any,
         }),
-        
+
         // 2. Re-map the structural relationships safely if provided in request
         ...(categoryIds && {
           categories: {
@@ -126,5 +127,97 @@ export class ProductsService {
   async remove(id: string) {
     await this.findOne(id);
     return this.prisma.product.delete({ where: { id } });
+  }
+
+  async findByCategory(categoryId: string, pagination: QueryPaginationDto) {
+    const page = pagination.page ?? 1;
+    const limit = pagination.limit ?? 10;
+    const skip = (page - 1) * limit;
+
+    // check if category exits
+    const cateogryExists = await this.prisma.category.findUnique({
+      where: { id: categoryId },
+    });
+
+    if (!cateogryExists) {
+      throw new NotFoundException(`Category with ID ${categoryId} does not exists`);
+    }
+
+    const [products, totalItems] = await Promise.all([
+      this.prisma.product.findMany({
+        where: {
+          categories: {
+            some: { id: categoryId }
+          }
+        },
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.product.count({
+        where: {
+          categories: {
+            some: { id: categoryId },
+          }
+        }
+      })
+    ]);
+
+    return {
+      data: products,
+      meta: {
+        totalItems,
+        itemCount: products.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(totalItems / limit),
+        currentPage: page,
+      }
+    }
+  }
+
+  async findBySubCategory(subCategoryId: string, filters: QueryPaginationDto) {
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 10;
+    const skip = (page - 1) * limit;
+
+    const subCategoryExists = await this.prisma.subcategory.findUnique({
+      where: { id: subCategoryId },
+    });
+
+    if (!subCategoryExists) {
+      throw new NotFoundException(`Subcategory with ID ${subCategoryId} not found`);
+    }
+    const whereConditions: Prisma.ProductWhereInput = {
+      subcategories: {
+        some: { id: subCategoryId },
+      },
+    };
+
+    if (filters.preOrder !== undefined) {
+      whereConditions.preOrder = filters.preOrder;
+    }
+
+    const [products, totalItems] = await Promise.all([
+      this.prisma.product.findMany({
+        where: whereConditions,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.product.count({
+        where: whereConditions,
+      }),
+    ]);
+
+    return {
+      data: products,
+      meta: {
+        totalItems,
+        itemCount: products.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(totalItems / limit),
+        currentPage: page,
+      },
+    };
   }
 }
