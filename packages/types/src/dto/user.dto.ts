@@ -11,6 +11,7 @@ export interface CreateUserDto {
   jobRole?: string;
   company?: string;
   interestType?: string;
+  otp: string;
 }
 
 // Update user request body (all optional)

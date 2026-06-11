@@ -23,10 +23,18 @@ import { StripeModule } from './stripe/stripe.module';
 import { MigrationModule } from './migration/migration.module';
 import { CheckoutModule } from './checkout/checkout.module';
 import { PaymentsModule } from './payment/payment.module';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    CacheModule.register({
+      isGlobal: true,
+      ttl: 5000,
+      max: 1000,
+    }),
     AuthModule, UsersModule, PrismaModule, ProductsModule, SubcategoriesModule, CategoriesModule, AdminsModule, PdevProductCategoryModule,
     PdevProductsModule,
     AffiliateUserModule,

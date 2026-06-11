@@ -53,7 +53,15 @@ export class PdevUsersService {
       where: { id },
       include: { generalUser: true, courseResults: true },
     });
-    if (!pdevUser) throw new NotFoundException(`PdevUser profile with ID "${id}" not found`);
+    if (!pdevUser) throw new NotFoundException(`Professional development user profile with ID "${id}" not found`);
+    return pdevUser;
+  }
+
+  async findByEmail(email: string) {
+    const pdevUser = await this.prisma.pdevUser.findUnique({
+      where: { email } as any,
+    });
+    if (!pdevUser) throw new NotFoundException(`Professional development user with email ${email} was not found`);
     return pdevUser;
   }
 

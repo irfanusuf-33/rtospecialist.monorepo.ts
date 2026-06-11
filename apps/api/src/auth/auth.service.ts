@@ -1,11 +1,15 @@
 import {
   BadRequestException,
+  HttpException,
+  HttpStatus,
+  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -15,7 +19,62 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    @Inject(CACHE_MANAGER) 
+    private cacheManager: Cache,
   ) {}
+
+  private readonly OTP_PREFIX = 'otp:code:';
+  private readonly COOLDOWN_PREFIX = 'otp:cooldown:';
+  private readonly ATTEMPTS_PREFIX = 'otp:attempts:';
+
+  async sendOtp(email: string): Promise<{ success: boolean; message: string, otp: string }> {
+    const cooldownKey = `${this.COOLDOWN_PREFIX}${email}`;
+    const otpKey = `${this.OTP_PREFIX}${email}`;
+    const attemptsKey = `${this.ATTEMPTS_PREFIX}${email}`;
+
+    const hasCooldown = await this.cacheManager.get(cooldownKey);
+    if (hasCooldown) {
+      throw new HttpException('Too many requests, please try again later. Please wait 60 seconds to request for another OTP.', HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    const { randomInt } = await import('crypto');
+    const otp = randomInt(100000, 999999).toString();
+
+    await this.cacheManager.set(otpKey, otp, 300000);
+    await this.cacheManager.set(cooldownKey, 'true', 60000);
+    await this.cacheManager.set(attemptsKey, 0, 300000);
+    return { success: true, message: 'OTP dispatched successfully.', otp };
+  }
+
+  async verifyOtp(email: string, userOtp: string): Promise<{ success: boolean }> {
+    const otpKey = `${this.OTP_PREFIX}${email}`;
+    const attemptsKey = `${this.ATTEMPTS_PREFIX}${email}`;
+
+    const cachedOtp = await this.cacheManager.get<string>(otpKey);
+    let attempts = (await this.cacheManager.get<number>(attemptsKey)) || 0;
+
+    if (!cachedOtp) {
+      throw new BadRequestException('OTP has expired or is invalid.');
+    }
+
+    if (attempts >= 5) {
+      await this.cacheManager.del(otpKey);
+      await this.cacheManager.del(attemptsKey);
+      throw new BadRequestException('Too many failed attempts. Please request a new OTP.');
+    }
+
+    if (cachedOtp !== userOtp) {
+      attempts += 1;
+      await this.cacheManager.set(attemptsKey, attempts, 300000);
+      throw new BadRequestException(`Invalid OTP. ${5 - attempts} attempts remaining.`);
+    }
+
+    await this.cacheManager.del(otpKey);
+    await this.cacheManager.del(attemptsKey);
+    await this.cacheManager.del(`${this.COOLDOWN_PREFIX}${email}`);
+
+    return { success: true };
+  }
 
   async register(dto: RegisterDto) {
     const existingUser = await this.usersService.findByEmail(dto.email);
@@ -23,6 +82,33 @@ export class AuthService {
     if (existingUser) {
       throw new BadRequestException('User already exists');
     }
+
+    const otpKey = `${this.OTP_PREFIX}${dto.email}`;
+    const attemptsKey = `${this.ATTEMPTS_PREFIX}${dto.email}`;
+
+    const cachedOtp = await this.cacheManager.get<string>(otpKey);
+    let attempts = (await this.cacheManager.get<number>(attemptsKey)) || 0;
+
+    if (!cachedOtp) {
+      throw new BadRequestException('OTP has expired or is invalid.');
+    }
+
+    if (attempts >= 5) {
+      await this.cacheManager.del(otpKey);
+      await this.cacheManager.del(attemptsKey);
+      throw new BadRequestException('Too many failed attempts. Please request a new OTP.');
+    }
+
+    if (cachedOtp !== dto.otp) {
+      attempts += 1;
+      await this.cacheManager.set(attemptsKey, attempts, 300000);
+      throw new BadRequestException(`Invalid OTP. ${5 - attempts} attempts remaining.`);
+    }
+
+    // 3. Clear Cache State Immediately (Prevents Replay Attacks)
+    await this.cacheManager.del(otpKey);
+    await this.cacheManager.del(attemptsKey);
+    await this.cacheManager.del(`${this.COOLDOWN_PREFIX}${dto.email}`);
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
@@ -44,10 +130,15 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    const user = await this.usersService.findByEmail(dto.email);
-
+    let user: any = null;
+    if (dto.accountType === 'client') {
+      user = await this.usersService.findByEmail(dto.email);
+    } else if (dto.accountType === 'pdevUser') {
+      user = await this.usersService.findByEmail(dto.email);
+    }
+    console.log('this is an auth user: ', user);
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Invalid credentials. Check your email and password or try again.');
     }
 
     const isPasswordValid = await bcrypt.compare(
@@ -56,7 +147,7 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Invalid credentials. Please check your email or password and try again.');
     }
 
     const token = await this.jwtService.signAsync({

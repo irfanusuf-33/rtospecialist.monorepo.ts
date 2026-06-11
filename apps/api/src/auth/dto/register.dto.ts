@@ -4,6 +4,7 @@ import {
   IsNotEmpty, 
   IsOptional, 
   IsString, 
+  Length, 
   MaxLength, 
   MinLength 
 } from 'class-validator';
@@ -51,4 +52,9 @@ export class RegisterDto implements CreateUserDto {
   @IsString()
   @IsOptional()
   interestType?: string;
+
+  @ApiPropertyOptional({ example: "4685224" })
+  @IsString()
+  @Length(6, 6, { message: 'OTP must be exactly 6 characters long' })
+  otp: string='';
 }
