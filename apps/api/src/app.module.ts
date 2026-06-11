@@ -24,6 +24,7 @@ import { MigrationModule } from './migration/migration.module';
 import { CheckoutModule } from './checkout/checkout.module';
 import { PaymentsModule } from './payment/payment.module';
 import { CacheModule } from '@nestjs/cache-manager';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { CacheModule } from '@nestjs/cache-manager';
     MigrationModule,
     CheckoutModule,
     PaymentsModule,
+    MailModule,
   ],
 })
 export class AppModule {}

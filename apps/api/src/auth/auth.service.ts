@@ -4,6 +4,7 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -13,14 +14,22 @@ import type { Cache } from 'cache-manager';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ConfigService } from '@nestjs/config';
+import { MailService } from '../mail/mail.service';
+import { ForgotPasswordConfirmDto, ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ChangePasswordDto } from '../users/dto/change-password.dto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
     @Inject(CACHE_MANAGER) 
     private cacheManager: Cache,
+    private readonly configService: ConfigService,
+    private readonly mailService: MailService,
   ) {}
 
   private readonly OTP_PREFIX = 'otp:code:';
@@ -180,26 +189,40 @@ export class AuthService {
     }
   }
 
-  async resetPassword(email: string, token: string, newPassword: string) {
-    const user = await this.usersService.findByEmail(email);
-    if (!user) {
-      throw new BadRequestException('Invalid reset request');
-    }
-    try {
-      const decoded = await this.jwtService.verifyAsync(token, {
-        secret: process.env.JWT_RESET_SECRET,
-      });
-      if (decoded.sub !== user.id) {
-        throw new BadRequestException('Invalid token');
-  }
+  async changePassword(userId: string, dto: ChangePasswordDto) {
+    const { currentPassword, newPassword } = dto;
 
-      const hashed = await bcrypt.hash(newPassword, 10);
-      // Assuming UsersService has an updatePassword method
-      await this.usersService.updatePassword(user.id, hashed);
-      return { message: 'Password has been reset successfully' };
-    } catch {
-      throw new BadRequestException('Invalid or expired reset token');
-}
+    // 1. Fetch the user directly from the database to get their current hashed password
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new BadRequestException('Authenticated user entity context could not be located.');
+    }
+
+    // 2. Cryptographically verify that the user actually knows their current password
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isCurrentPasswordValid) {
+      throw new BadRequestException('The current password you provided is incorrect.');
+    }
+
+    // 3. Security Guardrail: Prevent users from changing their password to the exact same one
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      throw new BadRequestException('Your new password cannot be identical to your current password.');
+    }
+
+    // 4. Hash the fresh password string securely
+    const saltRounds = 10;
+    const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    // 5. Update database parameters
+    await this.usersService.updatePassword(user.id, hashedNewPassword);
+
+    this.logger.log(`Password successfully updated for authenticated user identity ID: ${user.id}`);
+
+    return {
+      success: true,
+      message: 'Your account password has been updated successfully.',
+    };
   }
 
   async verifyEmail(token: string) {
@@ -215,27 +238,58 @@ export class AuthService {
     }
   }
 
-  async sendResetPasswordEmail(email: string) {
-    const user = await this.usersService.findByEmail(email);
+  async sendResetPasswordEmail(dto: ForgotPasswordDto) {
+    const user = await this.usersService.findByEmail(dto.email);
     if (!user) {
       // Don't reveal whether user exists
       return { message: 'If an account exists, a reset link has been sent' };
     }
 
-    const token = await this.jwtService.signAsync(
-      { sub: user.id },
-      {
-        secret: process.env.JWT_RESET_SECRET,
-        expiresIn: '1h'
-      }
+    // TODO: Implement actual email sending logic here
+    const secret = this.configService.get<string>('JWT_SECRET') + user.password;
+    const token = this.jwtService.sign(
+      { sub: user.id, email: user.email },
+      { secret, expiresIn: '15m' }
     );
 
-    // TODO: Implement actual email sending logic here
-    // For now we'll return the token for testing
-    return { 
+    const clientUrl = this.configService.get<string>('NODE_ENV') === 'development' ? 'http://localhost:3000' : 'https://rtospecialist.com.au';
+    const resetLink = `${clientUrl}/reset-password?token=${token}`;
+
+    // send email
+    this.mailService.sendResetPasswordEmail(user.email, resetLink);
+
+    return {
+      success: true,
       message: 'Reset link sent if account exists',
-      token // In production, don't return the token!
     };
+  }
+
+  async resetPasswordConfirm (dto: ForgotPasswordConfirmDto) {
+    const { token, newPassword } = dto;
+    const decoded = this.jwtService.decode(token) as { sub: string, email: string };
+    if (!decoded || !decoded.sub) {
+      throw new BadRequestException('The token is invalid. Or the session has expired. Please request a new forgot-password email');
+    }
+
+    const user = await this.usersService.findById(decoded.sub);
+    if (!user) {
+      throw new BadRequestException('Target reset indentity could not be verified. ');
+    }
+
+    const secret = this.configService.get<string>('JWT_AUTH_TOKEN') + user.password;
+    try {
+      await this.jwtService.verifyAsync(token, { secret });
+    } catch (error) {
+      throw new BadRequestException('The security recovery link is invalid or has expired.');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.usersService.updatePassword(user.id, hashedPassword);
+
+    return {
+      success: true,
+      message: "Your account password has been changed successfully.",
+    }
   }
 
   async logout(id: string) {
