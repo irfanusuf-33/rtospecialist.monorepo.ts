@@ -2,8 +2,8 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus
 import { ProductsService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { ApiOperation, ApiParam } from '@nestjs/swagger';
-import { QueryPaginationDto } from './dto/query-pagination.dto';
+import { ApiOkResponse, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { CategoryProductsQueryDto, QueryPaginationDto } from './dto/query-pagination.dto';
 
 @Controller('products')
 export class ProductsController {
@@ -59,5 +59,18 @@ export class ProductsController {
     @Query() paginationDto: QueryPaginationDto,
   ) {
     return this.productsService.findBySubCategory(subcategoryId, paginationDto);
+  }
+
+  @Get('catalog/:categoryId')
+  @ApiOperation({ summary: 'Get category meta data, its subcategories, and paginated products' })
+  @ApiParam({ name: 'categoryId', type: 'string', description: 'UUID of the parent category' })
+  @ApiQuery({ name: 'page', type: 'number', required: false, description: 'Page number (defaults to 1)', example: 1 })
+  @ApiQuery({ name: 'limit', type: 'number', required: false, description: 'Items per page (defaults to 10)', example: 10 })
+  @ApiOkResponse({ description: 'Returns organized category catalog information successfully.' })
+  async getCategoryCatalog(
+    @Param('categoryId', new ParseUUIDPipe()) categoryId: string, // Enforces UUID check at routing level
+    @Query() query: CategoryProductsQueryDto,
+  ) {
+    return this.productsService.getCategoryCatalog(categoryId, query);
   }
 }

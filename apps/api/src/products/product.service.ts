@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { QueryPaginationDto } from './dto/query-pagination.dto';
+import { CategoryProductsQueryDto, QueryPaginationDto } from './dto/query-pagination.dto';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -216,6 +216,77 @@ export class ProductsService {
         itemCount: products.length,
         itemsPerPage: limit,
         totalPages: Math.ceil(totalItems / limit),
+        currentPage: page,
+      },
+    };
+  }
+
+  async getCategoryCatalog(categoryId: string, query: CategoryProductsQueryDto) {
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const skip = (page - 1) * limit;
+
+    const category = await this.prisma.category.findUnique({
+      where: { id: categoryId },
+      include: {
+        subcategories: {
+          where: { disable: false },
+          select: { id: true, name: true, url: true },
+        },
+      },
+    });
+
+    if (!category) {
+      throw new NotFoundException(`Category with ID "${categoryId}" not found`);
+    }
+
+    const [products, totalProducts] = await this.prisma.$transaction([
+      this.prisma.product.findMany({
+        where: {
+          subcategories: {
+            some: {
+              categoryId: categoryId,
+            },
+          },
+          versionStatus: 'available',
+        },
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          subcategories: {
+            select: { id: true, name: true },
+          },
+        },
+      }),
+      this.prisma.product.count({
+        where: {
+          subcategories: {
+            some: {
+              categoryId: categoryId,
+            },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      category: {
+        id: category.id,
+        name: category.name,
+        abbreviation: category.abbreviation,
+        headline: category.headline,
+        subHeadline: category.subHeadline,
+        url: category.url,
+        iconUrl: category.iconUrl,
+        subcategories: category.subcategories,
+      },
+      products,
+      pagination: {
+        totalItems: totalProducts,
+        itemCount: products.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(totalProducts / limit),
         currentPage: page,
       },
     };
