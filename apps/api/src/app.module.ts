@@ -25,6 +25,8 @@ import { CheckoutModule } from './checkout/checkout.module';
 import { PaymentsModule } from './payment/payment.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { MailModule } from './mail/mail.module';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -54,5 +56,6 @@ import { MailModule } from './mail/mail.module';
     PaymentsModule,
     MailModule,
   ],
+  providers: [],
 })
 export class AppModule {}

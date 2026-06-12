@@ -138,30 +138,14 @@ export class AuthService {
     };
   }
 
-  async login(dto: LoginDto) {
-    let user: any = null;
-    if (dto.accountType === 'client') {
-      user = await this.usersService.findByEmail(dto.email);
-    } else if (dto.accountType === 'pdevUser') {
-      user = await this.usersService.findByEmail(dto.email);
-    }
-    console.log('this is an auth user: ', user);
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials. Check your email and password or try again.');
-    }
-
-    const isPasswordValid = await bcrypt.compare(
-      dto.password,
-      user.password,
-    );
-
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials. Please check your email or password and try again.');
-    }
-
+  async login(user: any, accountType: string) {
     const token = await this.jwtService.signAsync({
       sub: user.id,
       email: user.email,
+      accountType: accountType,
+    }, {
+      secret: this.configService.get<string>('SESSION_AUTH_TOKEN'),
+      expiresIn: '30d',
     });
 
     return {
@@ -292,14 +276,11 @@ export class AuthService {
     }
   }
 
-  async logout(id: string) {
-    // In a real implementation, you might:
-    // 1. Add token to a blacklist
-    // 2. Track logged out tokens until they expire
-    // 3. Clear refresh tokens if using them
-    
-    // For now we'll just return success message
-    return { message: 'Logout successful' };
+  async logout() {
+    return {
+      success: true,
+      message: 'Logout successful' 
+    };
   }
 
   async getMyProfile(id: string) {

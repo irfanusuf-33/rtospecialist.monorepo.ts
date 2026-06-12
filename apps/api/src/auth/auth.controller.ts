@@ -1,16 +1,16 @@
-import { Body, Controller, Post, Get, Param, Req, UseGuards, Res, UsePipes, HttpCode, HttpStatus, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Post, Get, Param, Req, UseGuards, Res, UsePipes, HttpCode, HttpStatus, ValidationPipe, SetMetadata } from '@nestjs/common';
 import express from 'express';
 
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ForgotPasswordConfirmDto, ForgotPasswordDto } from './dto/forgot-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { ChangePasswordDto } from '../users/dto/change-password.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { LoginDto } from './dto/login.dto';
 
 interface RequestWithUser extends express.Request {
   user: {
@@ -35,9 +35,12 @@ export class AuthController {
     return this.authService.register(dto);
   }
 
+  @UseGuards(AuthGuard('local'))
+  @ApiBody({ schema: { type: 'object', properties: { email: { type: 'string' }, password: { type: 'string' }, accountType: { type: 'string', enum: ['client', 'pdevUser'], description: 'Select user account profile type' } } } })
   @Post('login')
-  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) response: express.Response) {
-    const result = await this.authService.login(dto);
+  async login(@Req() req: any, @Res({ passthrough: true }) response: express.Response) {
+    const { accountType } = req.body;
+    const result = await this.authService.login(req.user, accountType);
     response.cookie('rto_session', result.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -50,8 +53,8 @@ export class AuthController {
       user: {
         id: result.user.id,
         email: result.user.email,
-        accountType: '',
-        name: result.user.firstName,
+        accountType: result.user.accountType,
+        name: result.user.firstName || result.user.name,
       }
     }
   }
@@ -108,7 +111,13 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
-  async logout(@Req() req: RequestWithUser) {
-    return this.authService.logout(req.user.id);
+  async logout(@Res({ passthrough: true }) response: express.Response) {
+    response.cookie('rto_session', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      expires: new Date(0),
+    });
+    return this.authService.logout();
   }
 }

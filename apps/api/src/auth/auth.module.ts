@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 
@@ -6,12 +6,15 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UsersModule } from '../users/users.module';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { JwtStrategy } from './strategies/jwt.strategy';
+import { LocalStrategy } from './strategies/jwt.strategy';
 import { MailModule } from '../mail/mail.module';
+import { PdevUsersModule } from '../pdev-user/pdev-user.module';
 
+@Global()
 @Module({
   imports: [
     MailModule,
+    PdevUsersModule,
     UsersModule,
     PassportModule,
     JwtModule.register({
@@ -22,6 +25,7 @@ import { MailModule } from '../mail/mail.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, JwtAuthGuard],
+  providers: [AuthService, LocalStrategy, JwtAuthGuard],
+  exports: [JwtModule, AuthService],
 })
 export class AuthModule {}
