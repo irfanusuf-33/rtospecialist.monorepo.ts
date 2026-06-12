@@ -41,6 +41,7 @@ export interface CartTotalsResponse {
   remainingCertCredits: number;
   payablePdevCount: number;
   moneySavedWithMembership: number;
+  grossSubtotal: number;
 }
 
 /**
@@ -77,6 +78,7 @@ export function calculateCartTotals(
 
   const basketLength = trainingProductCount + pdevProductCount;
 
+  const grossSubtotal = trainingSubtotalBeforeCredits + pdevSubtotalBeforeCredits;
   // 2. Allocate Unit Credits (Only applied to standard Training Products)
   const creditsToApply = Math.min(availableCredits, trainingProductCount);
   const payableTrainingCount = Math.max(0, trainingProductCount - creditsToApply);
@@ -154,5 +156,6 @@ export function calculateCartTotals(
     remainingCertCredits,
     payablePdevCount,
     moneySavedWithMembership: parseFloat(totalMoneySavedThisOrder.toFixed(2)),
+    grossSubtotal: parseFloat(grossSubtotal.toFixed(2))
   };
 }

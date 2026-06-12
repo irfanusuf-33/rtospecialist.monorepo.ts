@@ -18,9 +18,10 @@ export class CartsController {
     return this.cartsService.create(createCartDto);
   }
 
-  @Get('user/:userId')
+  @Get('user')
   @ApiOperation({ summary: 'Retrieve active shopping cart item lists targeting explicit User IDs' })
-  findByUser(@Param('userId') userId: string) {
+  findByUser(@Req() req: any) {
+    const userId = req.user?.id || 'cmq1xw6790000vj2809dnzrkk';
     return this.cartsService.findByUserId(userId);
   }
 
