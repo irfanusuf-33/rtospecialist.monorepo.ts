@@ -27,6 +27,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { MailModule } from './mail/mail.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { AwsModule } from './aws/aws.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     CheckoutModule,
     PaymentsModule,
     MailModule,
+    AwsModule,
   ],
   providers: [],
 })

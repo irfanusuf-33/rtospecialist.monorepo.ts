@@ -4,10 +4,11 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { CategoryProductsQueryDto, QueryPaginationDto } from './dto/query-pagination.dto';
 import { Prisma } from '@prisma/client';
+import { AwsS3Service } from '../aws/aws.service';
 
 @Injectable()
 export class ProductsService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService, private readonly awsS3Service: AwsS3Service) { }
 
   async create(createProductDto: CreateProductDto) {
     try {
@@ -289,6 +290,36 @@ export class ProductsService {
         totalPages: Math.ceil(totalProducts / limit),
         currentPage: page,
       },
+    };
+  }
+
+async uploadProductFile(productId: string, file: Express.Multer.File) {
+    // 1. Check if the target product exists
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+    });
+
+    if (!product) {
+      throw new NotFoundException(`Product with ID "${productId}" not found.`);
+    }
+
+    // 2. Stream asset to cloud cloud bucket path (organized under the 'product-attachments' directory)
+    const s3FileKey = await this.awsS3Service.uploadFile(file, 'product-attachments');
+
+    // 3. Persist the file state metadata to the Prisma model record
+    const updatedProduct = await this.prisma.product.update({
+      where: { id: productId },
+      data: {
+        fileUploaded: true,
+        link: s3FileKey, // Storing the S3 Key rather than full URL is best practice
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Product attachment asset successfully uploaded to AWS cloud infrastructure.',
+      fileKey: s3FileKey,
+      product: updatedProduct,
     };
   }
 }
