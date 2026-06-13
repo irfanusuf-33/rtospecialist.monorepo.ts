@@ -40,6 +40,19 @@ export class CouponsController {
     return this.couponsService.disable(id);
   }
 
+  @Patch('/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiParam({ name: 'id', description: 'The unique UUID or ID of the coupon to edit' })
+  @ApiResponse({ status: 200, description: 'Coupon updated successfully.' })
+  @ApiResponse({ status: 400, description: 'Invalid data provided.' })
+  @ApiResponse({ status: 404, description: 'Coupon not found.' })
+  async updateCoupon(
+    @Param('id') id: string,
+    @Body() updateCouponDto: UpdateCouponDto,
+  ) {
+    return this.couponsService.update(id, updateCouponDto);
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Hard delete a coupon' })
