@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateCouponDto } from './dto/create-coupon.dto';
 import { UpdateCouponDto } from './dto/update-coupon.dto';
 import { CouponType, TargetProductType } from '@prisma/client';
+import { PaginationQueryDto } from './dto/coupon-pagination.dto';
 
 @Injectable()
 export class CouponsService {
@@ -70,10 +71,30 @@ export class CouponsService {
     });
   }
 
-  async findAll() {
-    return this.prisma.coupon.findMany({
-      include: { applicableProducts: true }
-    });
+  async findAll(query: PaginationQueryDto) {
+    const { page=1 } = query;
+    const limit = 30;
+    const skip = (page - 1) * limit;
+
+    const [total, data] = await this.prisma.$transaction([
+      this.prisma.coupon.count(),
+      this.prisma.coupon.findMany({
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: { applicableProducts: true },
+      }),
+    ]);
+
+    return {
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+      data,
+    };
   }
 
   async findOne(id: string) {
@@ -119,8 +140,24 @@ export class CouponsService {
     });
   }
 
+  async disable(id: string) {
+    try {
+      return await this.prisma.coupon.update({
+        where: { id },
+        data: { isActive: false },
+      });
+    } catch (error) {
+      throw new NotFoundException(`Coupon with ID '${id}' not found.`);
+    }
+  }
+
   async remove(id: string) {
-    await this.findOne(id);
-    return this.prisma.coupon.delete({ where: { id } });
+    try {
+      return await this.prisma.coupon.delete({
+        where: { id },
+      });
+    } catch (error) {
+      throw new NotFoundException(`Coupon with ID '${id}' not found.`);
+    }
   }
 }

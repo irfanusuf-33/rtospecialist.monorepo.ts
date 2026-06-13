@@ -5,6 +5,7 @@ import { UpdateCartDto } from './dto/update-cart.dto';
 import { TargetProductType, Prisma, PlanStatus } from '@prisma/client';
 import { RemoveCartItemDto } from './dto/remove-cart-item.dto';
 import { calculateCartTotals, CartItemCalculatorInput } from './utils/cart-calculator.util';
+import { ApplyCouponDto } from './dto/cart-coupon-dto';
 
 type UserWithMemberships = Prisma.UserGetPayload<{
   include: { memberships: true };
@@ -300,5 +301,106 @@ export class CartsService {
       }
       throw error;
     }
+  }
+
+  async applyCoupon(cartId: string, dto: ApplyCouponDto) {
+    const cart = await this.prisma.cart.findUnique({
+      where: { id: cartId },
+      include: {
+        products: {
+          include: {
+            product: true, 
+            pdevProduct: true,
+          }
+        }
+      }
+    });
+
+    if (!cart) {
+      throw new NotFoundException(`Cart with ID '${cartId}' not found.`);
+    }
+
+    const coupon = await this.prisma.coupon.findUnique({
+      where: { code: dto.code },
+      include: { applicableProducts: true }
+    });
+
+    if (!coupon) {
+      throw new NotFoundException(`Coupon code '${dto.code}' does not exist.`);
+    }
+
+    if (!coupon.isActive) {
+      throw new BadRequestException(`Coupon '${dto.code}' is disabled.`);
+    }
+
+    const now = new Date();
+    if (coupon.startDate > now) {
+      throw new BadRequestException(`Coupon '${dto.code}' is not active yet.`);
+    }
+    if (coupon.endDate < now) {
+      throw new BadRequestException(`Coupon '${dto.code}' has expired.`);
+    }
+
+    // max redemptions disbaled for now
+    // if (coupon.maxRedemptions !== null && coupon.redemptionsCount >= coupon.maxRedemptions) {
+    //   throw new BadRequestException(`Coupon '${dto.code}' has reached its maximum use limit.`);
+    // }
+
+    let totalCartValue = 0;
+    let applicableItemsValue = 0;
+    
+    const hasProductRestrictions = coupon.applicableProducts.length > 0;
+
+    for (const item of cart.products) {
+      const price = item.product ? Number(item.product.price) : Number(55);
+      const itemSubtotal = price * item.quantity;
+      
+      totalCartValue += itemSubtotal;
+
+      if (hasProductRestrictions) {
+        const isMatch = coupon.applicableProducts.some(ap => 
+          ap.productId === item.productId && ap.productType === item.productType
+        );
+        if (isMatch) {
+          applicableItemsValue += itemSubtotal;
+        }
+      } else {
+        applicableItemsValue += itemSubtotal;
+      }
+    }
+    if (totalCartValue < Number(coupon.minOrderAmount)) {
+      throw new BadRequestException(
+        `Minimum order value of $${coupon.minOrderAmount} not met. Your current cart total is $${totalCartValue.toFixed(2)}.`
+      );
+    }
+
+    if (hasProductRestrictions && applicableItemsValue === 0) {
+      throw new BadRequestException(`This coupon is not applicable to any items currently in your cart.`);
+    }
+    return this.prisma.cart.update({
+      where: { id: cartId },
+      data: { couponId: coupon.id },
+      include: {
+        coupon: true,
+        products: true
+      }
+    });
+  }
+
+  async removeCoupon(cartId: string) {
+    const cart = await this.prisma.cart.findUnique({
+      where: { id: cartId },
+    });
+    if (!cart) {
+      throw new NotFoundException(`Cart with ID '${cartId}' not found.`);
+    }
+
+    return this.prisma.cart.update({
+      where: { id: cartId },
+      data: { couponId: null },
+      include: {
+        products: true,
+      },
+    });
   }
 }
