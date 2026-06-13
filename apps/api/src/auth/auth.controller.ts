@@ -11,6 +11,7 @@ import { SendOtpDto } from './dto/send-otp.dto';
 import { ChangePasswordDto } from '../users/dto/change-password.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { LoginDto } from './dto/login.dto';
+import { InitiateEmailChangeDto, VerifyEmailChangeDto } from './dto/change-email.dto';
 
 interface RequestWithUser extends express.Request {
   user: {
@@ -101,6 +102,47 @@ export class AuthController {
   @Get('verify-email/:token')
   async verifyEmail(@Param('token') token: string) {
     return this.authService.verifyEmail(token);
+  }
+
+  @Post('change-email/initiate')
+  @HttpCode(HttpStatus.OK)
+  async initiateEmailChange(
+    @Req() req: any,
+    @Body() dto: InitiateEmailChangeDto,
+  ) {
+    const userId = req.user.id;
+    await this.authService.initiateEmailChange(userId, dto.newEmail);
+    return { message: 'OTP successfully sent to your new email address.' };
+  }
+
+  // 2. Endpoint to verify OTP, update DB, and issue a refreshed JWT cookie
+  @Post('change-email/verify')
+  @HttpCode(HttpStatus.OK)
+  async verifyEmailChange(
+    @Req() req: any,
+    @Body() dto: VerifyEmailChangeDto,
+    @Res({ passthrough: true }) res: express.Response, // Allows updating cookies while returning data
+  ) {
+    const userId = req.user.id;
+    const accountType = req.user.accountType; // Pulled from your existing active JWT
+
+    // Verify and update email in database, then get the fresh user data
+    const { newToken } = await this.authService.verifyAndChangeEmail(
+      userId,
+      accountType,
+      dto.newEmail,
+      dto.otp,
+    );
+
+    // 4. Overwrite the existing cookie with the updated token payload
+    res.cookie('rto_session', newToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 1000 * 60 * 60 * 24 * 30,
+    });
+
+    return { message: 'Email updated successfully. Your session has been refreshed.' };
   }
 
   @UseGuards(JwtAuthGuard)

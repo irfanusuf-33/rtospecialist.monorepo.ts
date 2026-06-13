@@ -87,4 +87,75 @@ export class MailService implements OnModuleInit {
       return false;
     }
   }
+
+  async sendEmailChangeOtp(newEmail: string, otp: string): Promise<boolean> {
+    const fromEmail = this.configService.get<string>('MICROSOFT_MAIL_ID') || 'noreply@yourdomain.com';
+
+    const mailOptions = {
+      from: `"App Security" <${fromEmail}>`,
+      to: newEmail,
+      subject: 'Verify Your New Email Address',
+      text: `You requested to change your account email to this address. Your verification OTP code is: ${otp}. This code expires in 5 minutes.`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+          <h2 style="color: #2b6cb0; margin-bottom: 20px;">Email Change Verification</h2>
+          <p style="font-size: 16px; color: #555; line-height: 1.5;">
+            You requested to update your account email to this address. Please use the following One-Time Password (OTP) to verify and complete the change:
+          </p>
+          <h1 style="background: #f7fafc; padding: 20px; text-align: center; letter-spacing: 6px; color: #2d3748; border: 1px dashed #cbd5e0; border-radius: 6px; font-family: monospace; font-size: 32px; margin: 25px 0;">${otp}</h1>
+          <p style="font-size: 13px; color: #718096; line-height: 1.5;">
+            This security code will expire automatically in <strong>5 minutes</strong>. If you did not initiate this request, you can safely ignore this message—your account email will remain unchanged.
+          </p>
+        </div>
+      `,
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+      this.logger.log(`Email change OTP successfully sent to: ${newEmail}`);
+      return true;
+    } catch (error: any) {
+      this.logger.error(`SMTP failure sending email change OTP to ${newEmail}: ${error.message}`);
+      return false;
+    }
+  }
+
+  async sendEmailChangedAlert(oldEmail: string, newEmail: string): Promise<boolean> {
+    const fromEmail = this.configService.get<string>('MICROSOFT_MAIL_ID') || 'noreply@yourdomain.com';
+
+    const mailOptions = {
+      from: `"App Security" <${fromEmail}>`,
+      to: oldEmail,
+      subject: 'Security Alert: Your account email has been updated',
+      text: `Security Alert: The email address associated with your account was successfully changed to ${newEmail}. If you did not make this change, please contact support immediately.`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+          <h2 style="color: #e53e3e; margin-bottom: 20px;">Security Alert: Email Changed</h2>
+          <p style="font-size: 16px; color: #555; line-height: 1.5;">
+            The email address associated with your account has been successfully changed.
+          </p>
+          <div style="background: #fffaf0; border-left: 4px solid #dd6b20; padding: 15px; margin: 20px 0; border-radius: 4px;">
+            <p style="margin: 0; font-size: 14px; color: #7b341e;"><strong>Old Email:</strong> ${oldEmail}</p>
+            <p style="margin: 5px 0 0 0; font-size: 14px; color: #7b341e;"><strong>New Email:</strong> ${newEmail}</p>
+          </div>
+          <p style="font-size: 14px; color: #4a5568; line-height: 1.5; margin-top: 25px;">
+            <strong>Important:</strong> If you authorized this change, no further action is required. Your old email address can no longer be used to sign in.
+          </p>
+          <hr style="border: 0; border-top: 1px solid #edf2f7; margin: 25px 0;" />
+          <p style="font-size: 12px; color: #a0aec0; line-height: 1.5;">
+            If you did <strong>not</strong> request this change, your account may have been compromised. Please contact our system security team immediately to lock down your credentials.
+          </p>
+        </div>
+      `,
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+      this.logger.log(`Email change confirmation alert sent to old account inbox: ${oldEmail}`);
+      return true;
+    } catch (error: any) {
+      this.logger.error(`SMTP delivery crash when alerting old email address ${oldEmail}: ${error.message}`);
+      return false;
+    }
+  }
 }

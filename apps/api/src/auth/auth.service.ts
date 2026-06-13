@@ -13,11 +13,12 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
+import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '../mail/mail.service';
 import { ForgotPasswordConfirmDto, ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ChangePasswordDto } from '../users/dto/change-password.dto';
+import { PendingEmailCache } from '../../../../packages/types/src/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -30,6 +31,7 @@ export class AuthService {
     private cacheManager: Cache,
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
+    private readonly prisma: PrismaService,
   ) {}
 
   private readonly OTP_PREFIX = 'otp:code:';
@@ -294,5 +296,64 @@ export class AuthService {
       email: user.email,
       id: user.id,
     };
+  }
+
+  async initiateEmailChange(userId: string, newEmail: string) {
+    const [existingClient, existingAffiliate] = await Promise.all([
+      this.prisma.user.findUnique({ where: { email: newEmail } }),
+      this.prisma.affiliateUser.findUnique({ where: { email: newEmail } }),
+    ]);
+
+    if (existingClient || existingAffiliate) {
+      throw new BadRequestException('This email is already in use by another account.');
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const cacheKey = `otp:email-change:${userId}`;
+    const cacheValue: PendingEmailCache = { newEmail, otp };
+    
+    await this.cacheManager.set(cacheKey, cacheValue, 5 * 60 * 1000);
+    const emailSent = await this.mailService.sendOtpEmail(newEmail, otp);
+    
+    if (!emailSent) {
+      await this.cacheManager.del(cacheKey);
+      throw new BadRequestException('Failed to dispatch verification email. Please try again later.');
+    }
+  }
+
+  async verifyAndChangeEmail(userId: string, accountType: string, newEmail: string, otp: string) {
+    if (accountType === 'pdevUser') {
+      throw new BadRequestException(
+        'To change the email for your professional development account please contact your administrator.',
+      );
+    }
+
+    const cacheKey = `otp:email-change:${userId}`;
+    const cachedData = await this.cacheManager.get<PendingEmailCache>(cacheKey);
+    if (!cachedData) {
+      throw new BadRequestException('Verification code has expired or is invalid.');
+    }
+
+    if (cachedData.otp !== otp || cachedData.newEmail !== newEmail) {
+      throw new BadRequestException('Invalid verification OTP code.');
+    }
+
+    const userModel = (accountType === 'client' ? this.prisma.user : this.prisma.affiliateUser) as any;
+    await userModel.update({
+      where: { id: userId },
+      data: { email: newEmail },
+    });
+
+    await this.cacheManager.del(cacheKey);
+    const payload = { 
+      userId, 
+      email: newEmail,
+      accountType 
+    };
+    
+    const newToken = this.jwtService.sign(payload, { expiresIn: '30d' });
+
+    return { newToken };
   }
 }

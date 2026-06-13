@@ -223,3 +223,8 @@ export interface HelpAndSupport {
   // Relations
   user?: User | null;
 }
+
+export interface PendingEmailCache {
+  newEmail: string;
+  otp: string;
+}
