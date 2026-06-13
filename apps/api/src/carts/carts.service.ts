@@ -303,9 +303,9 @@ export class CartsService {
     }
   }
 
-  async applyCoupon(cartId: string, dto: ApplyCouponDto) {
+  async applyCoupon(userId: string, dto: ApplyCouponDto) {
     const cart = await this.prisma.cart.findUnique({
-      where: { id: cartId },
+      where: { userId: userId },
       include: {
         products: {
           include: {
@@ -317,7 +317,7 @@ export class CartsService {
     });
 
     if (!cart) {
-      throw new NotFoundException(`Cart with ID '${cartId}' not found.`);
+      throw new NotFoundException(`Cart with ID '${userId}' not found.`);
     }
 
     const coupon = await this.prisma.coupon.findUnique({
@@ -382,7 +382,7 @@ export class CartsService {
     }
 
     return this.prisma.cart.update({
-      where: { id: cartId },
+      where: { userId: userId },
       data: { couponId: coupon.id },
       include: {
         coupon: true,

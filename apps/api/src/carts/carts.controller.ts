@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, Req, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { CartsService } from './carts.service';
 import { AddCartItemDto, AddMultipleCartItemsDto, CreateCartDto } from './dto/create-cart.dto';
 import { UpdateCartDto } from './dto/update-cart.dto';
 import { RemoveCartItemDto } from './dto/remove-cart-item.dto';
 import { ApplyCouponDto, CartIdParamDto } from './dto/cart-coupon-dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Shopping Carts Engine')
 @Controller('carts')
@@ -70,18 +71,18 @@ export class CartsController {
     return this.cartsService.removeSingleItem(userId, removeCartItemDto);
   }
 
-  @Post(':cartId/coupon')
+  @Post('/apply-coupon')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Apply a coupon code to a specific cart' })
-  @ApiParam({ name: 'cartId', description: 'The UUID of the user cart' })
   @ApiResponse({ status: 200, description: 'Coupon successfully applied to the cart.' })
   @ApiResponse({ status: 400, description: 'Coupon is inactive or expired.' })
   @ApiResponse({ status: 404, description: 'Cart or Coupon not found.' })
   async applyCoupon(
-    @Param() params: CartIdParamDto,
+    @Req() req: any,
     @Body() applyCouponDto: ApplyCouponDto,
   ) {
-    return this.cartsService.applyCoupon(params.cartId, applyCouponDto);
+    const userId = req.user.id;
+    return this.cartsService.applyCoupon(userId, applyCouponDto);
   }
 
   @Delete(':cartId/coupon')
