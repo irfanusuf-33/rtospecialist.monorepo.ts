@@ -4,6 +4,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { TargetProductType } from '../../../../../packages/types/src/entities/product.entity';
 
 export enum OrderStatus {
   pending = 'pending',
@@ -84,9 +85,9 @@ class OrderProductDto {
   salePrice: number = 0;
 
   @ApiPropertyOptional({ example: 'digital', description: 'Product classification type' })
-  @IsString()
-  @IsOptional()
-  type?: string;
+  @IsEnum(TargetProductType)
+  @IsNotEmpty()
+  type: TargetProductType=TargetProductType.Product;
 }
 
 class CouponDto {

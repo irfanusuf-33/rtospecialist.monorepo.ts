@@ -40,12 +40,15 @@ export class CouponsService {
 
     const start = new Date(couponData.startDate || new Date().toISOString());
     const end = new Date(couponData.endDate);
-    if (end <= start) throw new BadRequestException('End date must be after the start date.');
+    if (end <= start) {
+      throw new BadRequestException('End date must be after the start date.');
+    }
 
     const existing = await this.prisma.coupon.findUnique({ where: { code: formattedCode } });
-    if (existing) throw new ConflictException(`Coupon code "${formattedCode}" already exists.`);
+    if (existing) {
+      throw new ConflictException(`Coupon code "${formattedCode}" already exists.`);
+    }
 
-    // Perform dynamic lookup across distinct tables dynamically via user input runtime variables
     if (applicableProducts && applicableProducts.length > 0) {
       for (const item of applicableProducts) {
         await this.validateProductExists(item.productId, item.productType);
@@ -60,11 +63,16 @@ export class CouponsService {
         endDate: end,
         applicableProducts: applicableProducts && applicableProducts.length > 0
           ? {
-              create: applicableProducts.map(item => ({
-                productId: item.productId,
+            create: applicableProducts.map(item => {
+              const isPdev = item.productType === TargetProductType.PdevProduct;
+
+              return {
                 productType: item.productType,
-              })),
-            }
+                productId: !isPdev ? item.productId : null,
+                pdevProductId: isPdev ? item.productId : null,
+              };
+            }),
+          }
           : undefined,
       },
       include: { applicableProducts: true }

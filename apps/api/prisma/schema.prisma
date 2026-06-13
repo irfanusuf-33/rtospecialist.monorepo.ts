@@ -656,14 +656,15 @@ model Coupon {
 model CouponProduct {
   id          String            @id @default(uuid())
   couponId    String
-  productId   String // Dynamic ID: can reference Product or PdevProduct
+  productId   String? // Dynamic ID: can reference Product or PdevProduct
+  pdevProductId String?
   productType TargetProductType // Discriminator field
 
   coupon Coupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
 
   // FIX: Added unique custom constraint names using the `map` property
   product     Product?     @relation(fields: [productId], references: [id], onDelete: Cascade, map: "coupon_product_standard_fkey")
-  pdevProduct PdevProduct? @relation(fields: [productId], references: [id], onDelete: Cascade, map: "coupon_product_pdev_fkey")
+  pdevProduct PdevProduct? @relation(fields: [pdevProductId], references: [id], onDelete: Cascade, map: "coupon_product_pdev_fkey")
 
   @@unique([couponId, productId, productType])
   @@index([productId])

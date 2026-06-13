@@ -309,7 +309,7 @@ export class CartsService {
       include: {
         products: {
           include: {
-            product: true, 
+            product: true,
             pdevProduct: true,
           }
         }
@@ -341,26 +341,28 @@ export class CartsService {
       throw new BadRequestException(`Coupon '${dto.code}' has expired.`);
     }
 
-    // max redemptions disbaled for now
-    // if (coupon.maxRedemptions !== null && coupon.redemptionsCount >= coupon.maxRedemptions) {
-    //   throw new BadRequestException(`Coupon '${dto.code}' has reached its maximum use limit.`);
-    // }
-
     let totalCartValue = 0;
     let applicableItemsValue = 0;
-    
+
     const hasProductRestrictions = coupon.applicableProducts.length > 0;
 
     for (const item of cart.products) {
-      const price = item.product ? Number(item.product.price) : Number(55);
+      const price = item.product
+        ? Number(item.product.price)
+        : Number(55);
+
       const itemSubtotal = price * item.quantity;
-      
       totalCartValue += itemSubtotal;
 
       if (hasProductRestrictions) {
-        const isMatch = coupon.applicableProducts.some(ap => 
-          ap.productId === item.productId && ap.productType === item.productType
-        );
+        const isMatch = coupon.applicableProducts.some(ap => {
+          if (ap.productType === TargetProductType.PdevProduct) {
+            return ap.pdevProductId === item.productId;
+          } else {
+            return ap.productId === item.productId;
+          }
+        });
+
         if (isMatch) {
           applicableItemsValue += itemSubtotal;
         }
@@ -368,6 +370,7 @@ export class CartsService {
         applicableItemsValue += itemSubtotal;
       }
     }
+
     if (totalCartValue < Number(coupon.minOrderAmount)) {
       throw new BadRequestException(
         `Minimum order value of $${coupon.minOrderAmount} not met. Your current cart total is $${totalCartValue.toFixed(2)}.`
@@ -377,6 +380,7 @@ export class CartsService {
     if (hasProductRestrictions && applicableItemsValue === 0) {
       throw new BadRequestException(`This coupon is not applicable to any items currently in your cart.`);
     }
+
     return this.prisma.cart.update({
       where: { id: cartId },
       data: { couponId: coupon.id },
@@ -386,7 +390,6 @@ export class CartsService {
       }
     });
   }
-
   async removeCoupon(cartId: string) {
     const cart = await this.prisma.cart.findUnique({
       where: { id: cartId },
